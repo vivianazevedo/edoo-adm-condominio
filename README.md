@@ -113,11 +113,13 @@ O script de criação está em [`sql/schema.sql`](sql/schema.sql).
 ├── include/              # arquivos de cabeçalho (.h)
 │   ├── modelo/
 │   ├── repositorio/
+│   ├── infra/
 │   ├── servico/
 │   └── interface/
 ├── src/                  # implementações (.cpp)
 │   ├── modelo/
 │   ├── repositorio/
+│   ├── infra/
 │   ├── servico/
 │   ├── interface/
 │   └── main.cpp
