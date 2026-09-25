@@ -1,5 +1,7 @@
 #include "infra/ErroCondominio.h"
 
+#include <utility>
+
 using namespace std; 
 
 ErroCondominio:: ErroCondominio (string mensagem) : mensagem_(move(mensagem)){}; 
