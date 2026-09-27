@@ -30,10 +30,15 @@ if(BUILD_TESTING)
     add_executable(test_database_i02 tests/test_database_i02.cpp)
     target_link_libraries(test_database_i02 PRIVATE condominio_core)
 
+    add_executable(test_irepositorio_i04 tests/test_irepositorio_i04.cpp)
+    target_include_directories(test_irepositorio_i04 PRIVATE include)
+
     add_test(
         NAME database_i02
         COMMAND test_database_i02
             "${CMAKE_CURRENT_BINARY_DIR}/database_i02_test.db"
             "${CMAKE_CURRENT_SOURCE_DIR}/sql/schema.sql"
     )
+
+    add_test(NAME irepositorio_i04 COMMAND test_irepositorio_i04)
 endif()
