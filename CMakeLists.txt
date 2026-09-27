@@ -13,6 +13,8 @@ add_library(SQLite::SQLite3 ALIAS sqlite3)
 add_library(condominio_core
     src/infra/Database.cpp
     src/infra/ErroCondominio.cpp
+    src/infra/FabricaPessoa.cpp
+    src/infra/FabricaAreaComum.cpp
 )
 
 target_include_directories(condominio_core PUBLIC include)
@@ -33,6 +35,13 @@ if(BUILD_TESTING)
     add_executable(test_irepositorio_i04 tests/test_irepositorio_i04.cpp)
     target_include_directories(test_irepositorio_i04 PRIVATE include)
 
+    add_executable(test_fabricas_i06
+        tests/test_fabricas_i06.cpp
+        src/infra/FabricaPessoa.cpp
+        src/infra/FabricaAreaComum.cpp
+    )
+    target_include_directories(test_fabricas_i06 PRIVATE include)
+
     add_test(
         NAME database_i02
         COMMAND test_database_i02
@@ -41,4 +50,5 @@ if(BUILD_TESTING)
     )
 
     add_test(NAME irepositorio_i04 COMMAND test_irepositorio_i04)
+    add_test(NAME fabricas_i06 COMMAND test_fabricas_i06)
 endif()
