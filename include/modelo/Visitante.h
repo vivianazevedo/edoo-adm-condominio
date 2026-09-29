@@ -1,7 +1,5 @@
 #pragma once
-
 #include <string>
-
 #include "modelo/Pessoa.h"
 
 using namespace std;
