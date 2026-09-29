@@ -22,7 +22,6 @@ string Pessoa :: normalizarCpf (const string& cpf) { //tira tudo que nao for dig
 }
 
 
-
 // VERIFICACAO CPF 
 
 bool Pessoa::cpfValido(const string& cpf) {
@@ -56,7 +55,7 @@ int soma = 0;
         return false;
     }
 
-int soma = 0;
+soma = 0;
     for (int i = 0; i < 10; i++) {
         soma += (digitos[i] - '0') * (11 - i);
     }
@@ -68,12 +67,10 @@ int soma = 0;
 }
 
 string Pessoa::textoObrigatorio(const string& valor, const string& campo) {
-    size_t inicio = valor.find_first_not_of(" \t\n");
-    if (inicio == string::npos) {
+    if (valor.empty()) {
         throw ErroValidacao(campo + " e obrigatorio.");
     }
-    size_t fim = valor.find_last_not_of(" \t\n");
-    return valor.substr(inicio, fim - inicio + 1);
+    return valor;
 }
 
 // descrever os 4 sets 
@@ -107,4 +104,13 @@ Pessoa::Pessoa(string nome, string cpf, string telefone, int id) {
     setNome(nome);
     setCpf(cpf);
     setTelefone(telefone);
+}
+
+string Pessoa :: dataIsoValida (const string& data, const string& campo) {
+
+    if (data.size() != 10 || data[4] != '-' || data[7] != '-'){ // valida se data esta no formato solicitado
+        throw ErroValidacao (campo + "invalida (use AAAA-MM-DD):" + data);
+    }
+
+    return data;
 }

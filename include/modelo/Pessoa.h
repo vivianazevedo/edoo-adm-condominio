@@ -7,12 +7,15 @@ using namespace std;
 class Pessoa {
 
     private:
-        static string textoObrigatorio(const string& valor, const string& campo); // remove espacos das pontas e recusa texto sem nada 
-        int id = 0;
+        int id_ = 0;
         string nome_;
         string cpf_; 
         string telefone_; 
 
+    protected:
+        static string textoObrigatorio(const string& valor, const string& campo); // remove espacos das pontas e recusa texto sem nada 
+        static string dataIsoValida(const string& data, const string& campo); // confere data (morador e funcionario usam por isso deixo em pessoa)
+       
     public:
         Pessoa (string nome, string cpf, string telefone, int id = 0);
         virtual ~Pessoa() = default; 
