@@ -1,7 +1,5 @@
 #include "servico/ApartamentoService.h"
-
 #include <string>
-
 #include "infra/ErroCondominio.h"
 
 namespace {
