@@ -5,7 +5,6 @@ int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
 
     MenuPrincipal menu;
-    menu.show();
-
+    menu.sh
     return app.exec();
 }
