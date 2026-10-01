@@ -24,6 +24,11 @@ add_library(condominio_core
     src/repositorio/RepositorioApartamento.cpp
     src/repositorio/RepositorioPessoa.cpp
     src/repositorio/RepositorioVisita.cpp
+    src/modelo/AreaComum.cpp
+    src/modelo/SalaoFestas.cpp
+    src/modelo/Piscina.cpp
+    src/modelo/Churrasqueira.cpp
+    src/modelo/Reserva.cpp
 )
 
 target_include_directories(condominio_core PUBLIC include)
@@ -61,6 +66,8 @@ if(BUILD_TESTING)
 
     add_executable(test_integracao_visitas tests/test_integracao_visitas.cpp)
     target_link_libraries(test_integracao_visitas PRIVATE condominio_core)
+    add_executable(test_modelos_areas_reservas tests/test_modelos_areas_reservas.cpp)
+    target_link_libraries(test_modelos_areas_reservas PRIVATE condominio_core)
 
     add_test(
         NAME database_i02
@@ -80,6 +87,7 @@ if(BUILD_TESTING)
         NAME integracao_visitas
         COMMAND test_integracao_visitas "${CMAKE_CURRENT_SOURCE_DIR}/sql/schema.sql"
     )
+    add_test(NAME modelos_areas_reservas COMMAND test_modelos_areas_reservas)
 endif()
 
 # A GUI e construida quando Qt 6 estiver disponivel. Sem ele, o nucleo e os
