@@ -1,6 +1,9 @@
 #include "servico/ReservaService.h"
-#include "repositorio/RepositorioReserva.h"
-#include "repositorio/RepositorioAreaComum.h"
+#include "repositorio/IRepositorioReserva.h"
+#include "repositorio/IRepositorioAreaComum.h"
+#include "modelo/Reserva.h"
+#include "modelo/AreaComum.h"
+#include "infra/ErroCondominio.h"
 
 int ReservaService::criar(int moradorId, int areaId, const std::string& data, 
                           const std::string& horaInicio, const std::string& horaFim, int convidados) {
