@@ -2,6 +2,9 @@
 
 #include <vector>
 #include <memory>
+#include <string>
+
+// Garantir os caminhos de include corretos do projeto
 #include "repositorio/IRepositorio.h"
 #include "modelo/Reserva.h"
 #include "infra/Database.h"
@@ -11,7 +14,7 @@ private:
     Database& db_;
 
 public:
-    RepositorioReserva() : db_(Database::getInstancia()) {}
+    RepositorioReserva() : db_(Database::instancia()) {}
 
     int inserir(const Reserva& entidade) override;
     std::unique_ptr<Reserva> buscarPorId(int id) override;
