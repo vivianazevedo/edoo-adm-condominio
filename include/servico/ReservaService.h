@@ -2,6 +2,8 @@
 #define RESERVA_SERVICE_H
 
 #include <memory>
+#include <chrono>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -11,12 +13,16 @@
 
 class ReservaService {
 private:
-    std::shared_ptr<RepositorioReserva> repoReserva_;
+    std::shared_ptr<IRepositorioReserva> repoReserva_;
     std::shared_ptr<IRepositorioAreaComum> repoArea_;
+    std::function<std::chrono::system_clock::time_point()> agora_;
 
 public:
-    ReservaService(std::shared_ptr<RepositorioReserva> repoReserva,
-                   std::shared_ptr<IRepositorioAreaComum> repoArea);
+    ReservaService();
+    ReservaService(std::shared_ptr<IRepositorioReserva> repoReserva,
+                   std::shared_ptr<IRepositorioAreaComum> repoArea,
+                   std::function<std::chrono::system_clock::time_point()> agora =
+                       std::chrono::system_clock::now);
 
     int criar(int moradorId, int areaId, const std::string& data, 
               const std::string& horaInicio, const std::string& horaFim, int convidados);
