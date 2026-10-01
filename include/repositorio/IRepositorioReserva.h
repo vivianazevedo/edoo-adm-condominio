@@ -1,28 +1,15 @@
 #pragma once
 
-#include <vector>
-#include <memory>
-#include <string>
-
-// Garantir os caminhos de include corretos do projeto
-#include "repositorio/IRepositorio.h"
 #include "modelo/Reserva.h"
-#include "infra/Database.h"
+#include "repositorio/IRepositorio.h"
 
-class RepositorioReserva : public IRepositorio<Reserva> {
-private:
-    Database& db_;
+#include <string>
+#include <vector>
 
+class IRepositorioReserva : public IRepositorio<Reserva> {
 public:
-    RepositorioReserva() : db_(Database::instancia()) {}
-
-    int inserir(const Reserva& entidade) override;
-    std::unique_ptr<Reserva> buscarPorId(int id) override;
-    std::vector<std::unique_ptr<Reserva>> listar() override;
-    bool atualizar(const Reserva& entidade) override;
-    bool remover(int id) override;
-
-    // Métodos específicos de consulta exigidos na US06
-    std::vector<std::unique_ptr<Reserva>> buscarPorMorador(int moradorId);
-    std::vector<std::unique_ptr<Reserva>> buscarPorAreaEData(int areaId, const std::string& data);
+    ~IRepositorioReserva() override = default;
+    virtual std::vector<std::unique_ptr<Reserva>> buscarPorMorador(int moradorId) = 0;
+    virtual std::vector<std::unique_ptr<Reserva>> buscarPorAreaEData(
+        int areaId, const std::string& data) = 0;
 };
