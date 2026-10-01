@@ -23,6 +23,9 @@ add_library(condominio_core
     src/modelo/Visita.cpp
     src/repositorio/RepositorioApartamento.cpp
     src/repositorio/RepositorioPessoa.cpp
+    src/servico/ApartamentoService.cpp
+    src/servico/MoradorService.cpp
+    src/servico/FuncionarioService.cpp
     src/repositorio/RepositorioVisita.cpp
     src/modelo/AreaComum.cpp
     src/modelo/SalaoFestas.cpp
@@ -64,6 +67,8 @@ if(BUILD_TESTING)
     add_executable(test_integracao_pessoas_i06 tests/test_integracao_pessoas_i06.cpp)
     target_link_libraries(test_integracao_pessoas_i06 PRIVATE condominio_core)
 
+    add_executable(test_servicos_pessoas_p05 tests/test_servicos_pessoas_p05.cpp)
+    target_link_libraries(test_servicos_pessoas_p05 PRIVATE condominio_core)
     add_executable(test_integracao_visitas tests/test_integracao_visitas.cpp)
     target_link_libraries(test_integracao_visitas PRIVATE condominio_core)
     add_executable(test_modelos_areas_reservas tests/test_modelos_areas_reservas.cpp)
@@ -84,6 +89,8 @@ if(BUILD_TESTING)
         COMMAND test_integracao_pessoas_i06 "${CMAKE_CURRENT_SOURCE_DIR}/sql/schema.sql"
     )
     add_test(
+        NAME servicos_pessoas_p05
+        COMMAND test_servicos_pessoas_p05 "${CMAKE_CURRENT_SOURCE_DIR}/sql/schema.sql"
         NAME integracao_visitas
         COMMAND test_integracao_visitas "${CMAKE_CURRENT_SOURCE_DIR}/sql/schema.sql"
     )
