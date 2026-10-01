@@ -19,6 +19,18 @@ add_library(condominio_core
     src/infra/ErroCondominio.cpp
     src/infra/FabricaPessoa.cpp
     src/infra/FabricaAreaComum.cpp
+    src/modelo/Apartamento.cpp
+    src/modelo/Pessoa.cpp
+    src/modelo/Morador.cpp
+    src/modelo/Visitante.cpp
+    src/modelo/Funcionario.cpp
+    src/modelo/Visita.cpp
+    src/repositorio/RepositorioApartamento.cpp
+    src/repositorio/RepositorioPessoa.cpp
+    src/servico/ApartamentoService.cpp
+    src/servico/MoradorService.cpp
+    src/servico/FuncionarioService.cpp
+    src/repositorio/RepositorioVisita.cpp
     src/modelo/AreaComum.cpp
     src/modelo/SalaoFestas.cpp
     src/modelo/Piscina.cpp
@@ -70,11 +82,16 @@ if(BUILD_TESTING)
 
     add_executable(test_fabrica_pessoa_real_i06
         tests/test_fabrica_pessoa_real_i06.cpp
-        src/modelo/Pessoa.cpp
-        src/modelo/Morador.cpp
     )
     target_link_libraries(test_fabrica_pessoa_real_i06 PRIVATE condominio_core)
 
+    add_executable(test_integracao_pessoas_i06 tests/test_integracao_pessoas_i06.cpp)
+    target_link_libraries(test_integracao_pessoas_i06 PRIVATE condominio_core)
+
+    add_executable(test_servicos_pessoas_p05 tests/test_servicos_pessoas_p05.cpp)
+    target_link_libraries(test_servicos_pessoas_p05 PRIVATE condominio_core)
+    add_executable(test_integracao_visitas tests/test_integracao_visitas.cpp)
+    target_link_libraries(test_integracao_visitas PRIVATE condominio_core)
     add_executable(test_modelos_areas_reservas tests/test_modelos_areas_reservas.cpp)
     target_link_libraries(test_modelos_areas_reservas PRIVATE condominio_core)
 
@@ -88,6 +105,16 @@ if(BUILD_TESTING)
     add_test(NAME irepositorio_i04 COMMAND test_irepositorio_i04)
     add_test(NAME fabricas_i06 COMMAND test_fabricas_i06)
     add_test(NAME fabrica_pessoa_real_i06 COMMAND test_fabrica_pessoa_real_i06)
+    add_test(
+        NAME integracao_pessoas_i06
+        COMMAND test_integracao_pessoas_i06 "${CMAKE_CURRENT_SOURCE_DIR}/sql/schema.sql"
+    )
+    add_test(
+        NAME servicos_pessoas_p05
+        COMMAND test_servicos_pessoas_p05 "${CMAKE_CURRENT_SOURCE_DIR}/sql/schema.sql"
+        NAME integracao_visitas
+        COMMAND test_integracao_visitas "${CMAKE_CURRENT_SOURCE_DIR}/sql/schema.sql"
+    )
     add_test(NAME modelos_areas_reservas COMMAND test_modelos_areas_reservas)
 endif()
 
