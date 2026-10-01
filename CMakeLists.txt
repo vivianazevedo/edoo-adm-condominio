@@ -15,6 +15,11 @@ add_library(condominio_core
     src/infra/ErroCondominio.cpp
     src/infra/FabricaPessoa.cpp
     src/infra/FabricaAreaComum.cpp
+    src/modelo/AreaComum.cpp
+    src/modelo/SalaoFestas.cpp
+    src/modelo/Piscina.cpp
+    src/modelo/Churrasqueira.cpp
+    src/modelo/Reserva.cpp
 )
 
 target_include_directories(condominio_core PUBLIC include)
@@ -49,6 +54,9 @@ if(BUILD_TESTING)
     )
     target_link_libraries(test_fabrica_pessoa_real_i06 PRIVATE condominio_core)
 
+    add_executable(test_modelos_areas_reservas tests/test_modelos_areas_reservas.cpp)
+    target_link_libraries(test_modelos_areas_reservas PRIVATE condominio_core)
+
     add_test(
         NAME database_i02
         COMMAND test_database_i02
@@ -59,6 +67,7 @@ if(BUILD_TESTING)
     add_test(NAME irepositorio_i04 COMMAND test_irepositorio_i04)
     add_test(NAME fabricas_i06 COMMAND test_fabricas_i06)
     add_test(NAME fabrica_pessoa_real_i06 COMMAND test_fabrica_pessoa_real_i06)
+    add_test(NAME modelos_areas_reservas COMMAND test_modelos_areas_reservas)
 endif()
 
 # A GUI e construida quando Qt 6 estiver disponivel. Sem ele, o nucleo e os
