@@ -36,6 +36,8 @@ add_library(condominio_core
     src/repositorio/RepositorioReserva.cpp
     src/servico/AreaComumService.cpp
     src/servico/ReservaService.cpp
+        src/servico/ReservaService.cpp
+    src/servico/VisitaService.cpp
 )
 
 target_include_directories(condominio_core PUBLIC include)
