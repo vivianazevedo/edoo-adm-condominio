@@ -19,6 +19,11 @@ add_library(condominio_core
     src/infra/ErroCondominio.cpp
     src/infra/FabricaPessoa.cpp
     src/infra/FabricaAreaComum.cpp
+    src/modelo/AreaComum.cpp
+    src/modelo/SalaoFestas.cpp
+    src/modelo/Piscina.cpp
+    src/modelo/Churrasqueira.cpp
+    src/modelo/Reserva.cpp
 )
 
 target_include_directories(condominio_core PUBLIC include)
@@ -70,6 +75,9 @@ if(BUILD_TESTING)
     )
     target_link_libraries(test_fabrica_pessoa_real_i06 PRIVATE condominio_core)
 
+    add_executable(test_modelos_areas_reservas tests/test_modelos_areas_reservas.cpp)
+    target_link_libraries(test_modelos_areas_reservas PRIVATE condominio_core)
+
     add_test(
         NAME database_i02
         COMMAND test_database_i02
@@ -80,4 +88,30 @@ if(BUILD_TESTING)
     add_test(NAME irepositorio_i04 COMMAND test_irepositorio_i04)
     add_test(NAME fabricas_i06 COMMAND test_fabricas_i06)
     add_test(NAME fabrica_pessoa_real_i06 COMMAND test_fabrica_pessoa_real_i06)
+<<<<<<< HEAD
 endif()
+=======
+    add_test(NAME modelos_areas_reservas COMMAND test_modelos_areas_reservas)
+endif()
+
+# A GUI e construida quando Qt 6 estiver disponivel. Sem ele, o nucleo e os
+# testes continuam compilaveis (por exemplo, no ambiente de integracao).
+find_package(Qt6 QUIET COMPONENTS Widgets)
+if(Qt6_FOUND)
+    add_executable(condominio_gui
+        src/main.cpp
+        src/interface/MenuPrincipal.cpp
+        include/interface/MenuPrincipal.h
+    )
+    # Estes geradores de codigo sao necessarios somente para a interface Qt.
+    set_target_properties(condominio_gui PROPERTIES
+        AUTOMOC ON
+        AUTORCC ON
+        AUTOUIC ON
+    )
+    target_include_directories(condominio_gui PRIVATE include)
+    target_link_libraries(condominio_gui PRIVATE Qt6::Widgets condominio_core)
+else()
+    message(STATUS "Qt 6 Widgets nao encontrado: condominio_gui nao sera construido")
+endif()
+>>>>>>> 27981c22f10b69812e4acfcd4eadfc70ed6228ed
