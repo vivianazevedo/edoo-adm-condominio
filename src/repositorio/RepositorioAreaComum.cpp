@@ -1,64 +1,91 @@
 #include "repositorio/RepositorioAreaComum.h"
-#include "modelo/SalaoFestas.h"
-#include "modelo/Piscina.h"
+
+#include "infra/FabricaAreaComum.h"
 #include "modelo/Churrasqueira.h"
-#include <iostream>
+#include "modelo/Piscina.h"
+#include "modelo/SalaoFestas.h"
+#include "SqliteComando.h"
+
+#include <memory>
+
+namespace {
+
+std::unique_ptr<AreaComum> montar(const SqliteComando& comando) {
+    const int id = comando.inteiroEm(0);
+    const std::string nome = comando.textoEm(1);
+    const std::string tipo = comando.textoEm(2);
+    const int capacidade = comando.inteiroEm(3);
+    const double taxa = comando.realEm(4);
+    const std::string abertura = comando.textoEm(5);
+    const std::string fechamento = comando.textoEm(6);
+
+    FabricaAreaComum fabrica;
+    fabrica.registrarSalaoFestas([&] {
+        return std::make_unique<SalaoFestas>(id, nome, capacidade, taxa,
+                                             abertura, fechamento);
+    });
+    fabrica.registrarPiscina([&] {
+        return std::make_unique<Piscina>(id, nome, capacidade, taxa,
+                                         abertura, fechamento);
+    });
+    fabrica.registrarChurrasqueira([&] {
+        return std::make_unique<Churrasqueira>(id, nome, capacidade, taxa,
+                                               abertura, fechamento);
+    });
+    return fabrica.criar(tipo);
+}
+
+}  // namespace
 
 int RepositorioAreaComum::inserir(const AreaComum& entidade) {
-    std::string sql = "INSERT INTO area_comum (nome, tipo, capacidade, taxa_base, hora_abertura, hora_fechamento) VALUES ('" +
-                      entidade.getNome() + "', '" + entidade.getTipo() + "', " +
-                      std::to_string(entidade.getCapacidade()) + ", " +
-                      std::to_string(entidade.getTaxaBase()) + ", '" +
-                      entidade.getHoraAbertura() + "', '" + entidade.getHoraFechamento() + "');";
-    
-    return db_.executarComId(sql);
+    SqliteComando comando(
+        "INSERT INTO area_comum (nome, tipo, capacidade, taxa_base, "
+        "hora_abertura, hora_fechamento) VALUES (?, ?, ?, ?, ?, ?)");
+    comando.texto(1, entidade.getNome());
+    comando.texto(2, entidade.getTipo());
+    comando.inteiro(3, entidade.getCapacidade());
+    comando.real(4, entidade.getTaxaBase());
+    comando.texto(5, entidade.getHoraAbertura());
+    comando.texto(6, entidade.getHoraFechamento());
+    comando.executar();
+    return comando.ultimoId();
 }
 
 std::unique_ptr<AreaComum> RepositorioAreaComum::buscarPorId(int id) {
-    auto lista = listar();
-    for (auto& area : lista) {
-        if (area->getId() == id) {
-            return std::move(area);
-        }
-    }
-    return nullptr;
+    SqliteComando comando(
+        "SELECT id, nome, tipo, capacidade, taxa_base, hora_abertura, "
+        "hora_fechamento FROM area_comum WHERE id = ?");
+    comando.inteiro(1, id);
+    return comando.proxima() ? montar(comando) : nullptr;
 }
 
 std::vector<std::unique_ptr<AreaComum>> RepositorioAreaComum::listar() {
-    std::vector<std::unique_ptr<AreaComum>> lista;
-    std::string sql = "SELECT id, nome, tipo, capacidade, taxa_base, hora_abertura, hora_fechamento FROM area_comum;";
-    
-    auto resultados = db_.consultar(sql);
-    for (const auto& linha : resultados) {
-        int id = std::stoi(linha.at("id"));
-        std::string nome = linha.at("nome");
-        std::string tipo = linha.at("tipo");
-        int capacidade = std::stoi(linha.at("capacidade"));
-        double taxaBase = std::stod(linha.at("taxa_base"));
-        std::string abertura = linha.at("hora_abertura");
-        std::string fechamento = linha.at("hora_fechamento");
-
-        // Instanciação polimórfica baseada no tipo salvo no banco
-        if (tipo == "SalaoFestas") {
-            lista.push_back(std::make_unique<SalaoFestas>(id, nome, capacidade, taxaBase, abertura, fechamento));
-        } else if (tipo == "Piscina") {
-            lista.push_back(std::make_unique<Piscina>(id, nome, capacidade, taxaBase, abertura, fechamento));
-        } else if (tipo == "Churrasqueira") {
-            lista.push_back(std::make_unique<Churrasqueira>(id, nome, capacidade, taxaBase, abertura, fechamento));
-        }
-    }
-    return lista;
+    SqliteComando comando(
+        "SELECT id, nome, tipo, capacidade, taxa_base, hora_abertura, "
+        "hora_fechamento FROM area_comum ORDER BY id");
+    std::vector<std::unique_ptr<AreaComum>> resultado;
+    while (comando.proxima()) resultado.push_back(montar(comando));
+    return resultado;
 }
 
 bool RepositorioAreaComum::atualizar(const AreaComum& entidade) {
-    std::string sql = "UPDATE area_comum SET nome = '" + entidade.getNome() +
-                      "', capacidade = " + std::to_string(entidade.getCapacidade()) +
-                      ", taxa_base = " + std::to_string(entidade.getTaxaBase()) +
-                      " WHERE id = " + std::to_string(entidade.getId()) + ";";
-    return db_.executar(sql);
+    SqliteComando comando(
+        "UPDATE area_comum SET nome = ?, tipo = ?, capacidade = ?, taxa_base = ?, "
+        "hora_abertura = ?, hora_fechamento = ? WHERE id = ?");
+    comando.texto(1, entidade.getNome());
+    comando.texto(2, entidade.getTipo());
+    comando.inteiro(3, entidade.getCapacidade());
+    comando.real(4, entidade.getTaxaBase());
+    comando.texto(5, entidade.getHoraAbertura());
+    comando.texto(6, entidade.getHoraFechamento());
+    comando.inteiro(7, entidade.getId());
+    comando.executar();
+    return comando.alteradas() > 0;
 }
 
 bool RepositorioAreaComum::remover(int id) {
-    std::string sql = "DELETE FROM area_comum WHERE id = " + std::to_string(id) + ";";
-    return db_.executar(sql);
+    SqliteComando comando("DELETE FROM area_comum WHERE id = ?");
+    comando.inteiro(1, id);
+    comando.executar();
+    return comando.alteradas() > 0;
 }
