@@ -36,7 +36,6 @@ add_library(condominio_core
     src/repositorio/RepositorioReserva.cpp
     src/servico/AreaComumService.cpp
     src/servico/ReservaService.cpp
-        src/servico/ReservaService.cpp
     src/servico/VisitaService.cpp
 )
 
@@ -107,6 +106,9 @@ if(BUILD_TESTING)
     add_executable(test_servicos_areas_reservas tests/test_servicos_areas_reservas.cpp)
     target_link_libraries(test_servicos_areas_reservas PRIVATE condominio_core)
 
+    add_executable(test_cenarios_integracao_d02 tests/test_cenarios_integracao_d02.cpp)
+    target_link_libraries(test_cenarios_integracao_d02 PRIVATE condominio_core)
+
     add_test(
         NAME database_i02
         COMMAND test_database_i02
@@ -137,5 +139,9 @@ if(BUILD_TESTING)
     add_test(
         NAME servicos_areas_reservas
         COMMAND test_servicos_areas_reservas "${CMAKE_CURRENT_SOURCE_DIR}/sql/schema.sql"
+    )
+    add_test(
+        NAME cenarios_integracao_d02
+        COMMAND test_cenarios_integracao_d02 "${CMAKE_CURRENT_SOURCE_DIR}/sql/schema.sql"
     )
 endif()
