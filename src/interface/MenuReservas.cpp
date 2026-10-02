@@ -1,10 +1,48 @@
 #include "interface/MenuReservas.h"
 #include <iostream>
-#include <limits>
+#include <stdexcept>
+
+namespace {
+
+std::string lerTexto(const char* pergunta) {
+    std::cout << pergunta;
+    std::string valor;
+    if (!std::getline(std::cin, valor)) throw std::runtime_error("entrada encerrada");
+    return valor;
+}
+
+int lerInteiro(const char* pergunta) {
+    for (;;) {
+        const std::string entrada = lerTexto(pergunta);
+        try {
+            std::size_t usados = 0;
+            const int valor = std::stoi(entrada, &usados);
+            if (usados == entrada.size()) return valor;
+        } catch (const std::exception&) {
+            // Repete a pergunta abaixo.
+        }
+        std::cout << "Numero invalido, tente novamente.\n";
+    }
+}
+
+double lerDecimal(const char* pergunta) {
+    for (;;) {
+        const std::string entrada = lerTexto(pergunta);
+        try {
+            std::size_t usados = 0;
+            const double valor = std::stod(entrada, &usados);
+            if (usados == entrada.size()) return valor;
+        } catch (const std::exception&) {
+            // Repete a pergunta abaixo.
+        }
+        std::cout << "Valor invalido, tente novamente.\n";
+    }
+}
+
+}  // namespace
 
 void MenuReservas::exibirMenu() {
-    int opcao = -1;
-    while (opcao != 0) {
+    while (std::cin) {
         std::cout << "\n========================================\n";
         std::cout << "      Gesta'o de A'reas e Reservas      \n";
         std::cout << "========================================\n";
@@ -14,22 +52,20 @@ void MenuReservas::exibirMenu() {
         std::cout << "4. Listar Reservas por Morador\n";
         std::cout << "5. Cancelar Reserva\n";
         std::cout << "0. Voltar ao Menu Principal\n";
-        std::cout << "Escolha uma opca'o: ";
-        
-        if (!(std::cin >> opcao)) {
-            std::cin.clear();
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-            continue;
-        }
-
-        switch (opcao) {
-            case 1: listarAreas(); break;
-            case 2: cadastrarArea(); break;
-            case 3: criarReserva(); break;
-            case 4: listarMinhasReservas(); break;
-            case 5: cancelarReserva(); break;
-            case 0: std::cout << "A voltar...\n"; break;
-            default: std::cout << "Opca'o inva'lida!\n"; break;
+        try {
+            const int opcao = lerInteiro("Escolha uma opcao: ");
+            if (opcao == 0) return;
+            switch (opcao) {
+                case 1: listarAreas(); break;
+                case 2: cadastrarArea(); break;
+                case 3: criarReserva(); break;
+                case 4: listarMinhasReservas(); break;
+                case 5: cancelarReserva(); break;
+                default: std::cout << "Opcao invalida!\n"; break;
+            }
+        } catch (const std::exception& erro) {
+            if (!std::cin) return;
+            std::cerr << "Operacao nao concluida: " << erro.what() << '\n';
         }
     }
 }
@@ -51,24 +87,13 @@ void MenuReservas::listarAreas() {
 }
 
 void MenuReservas::cadastrarArea() {
-    std::string tipo, nome, abertura, fechamento;
-    int capacidade;
-    double taxaBase;
-
     std::cout << "\n--- Nova A'rea Comum ---\n";
-    std::cout << "Tipo (SalaoFestas, Piscina, Churrasqueira): ";
-    std::cin >> tipo;
-    std::cout << "Nome: ";
-    std::cin.ignore();
-    std::getline(std::cin, nome);
-    std::cout << "Capacidade: ";
-    std::cin >> capacidade;
-    std::cout << "Taxa Base (R$): ";
-    std::cin >> taxaBase;
-    std::cout << "Hora Abertura (HH:MM): ";
-    std::cin >> abertura;
-    std::cout << "Hora Fechamento (HH:MM): ";
-    std::cin >> fechamento;
+    const std::string tipo = lerTexto("Tipo (SalaoFestas, Piscina, Churrasqueira): ");
+    const std::string nome = lerTexto("Nome: ");
+    const int capacidade = lerInteiro("Capacidade: ");
+    const double taxaBase = lerDecimal("Taxa Base (R$): ");
+    const std::string abertura = lerTexto("Hora Abertura (HH:MM): ");
+    const std::string fechamento = lerTexto("Hora Fechamento (HH:MM): ");
 
     int res = areaService_.cadastrar(tipo, nome, capacidade, taxaBase, abertura, fechamento);
     if (res > 0) {
@@ -79,22 +104,13 @@ void MenuReservas::cadastrarArea() {
 }
 
 void MenuReservas::criarReserva() {
-    int moradorId, areaId, convidados;
-    std::string data, horaInicio, horaFim;
-
     std::cout << "\n--- Nova Reserva ---\n";
-    std::cout << "ID do Morador: ";
-    std::cin >> moradorId;
-    std::cout << "ID da A'rea Comum: ";
-    std::cin >> areaId;
-    std::cout << "Data (AAAA-MM-DD): ";
-    std::cin >> data;
-    std::cout << "Hora In'cio (HH:MM): ";
-    std::cin >> horaInicio;
-    std::cout << "Hora Fim (HH:MM): ";
-    std::cin >> horaFim;
-    std::cout << "Nu'mero de Convidados: ";
-    std::cin >> convidados;
+    const int moradorId = lerInteiro("ID do Morador: ");
+    const int areaId = lerInteiro("ID da Area Comum: ");
+    const std::string data = lerTexto("Data (AAAA-MM-DD): ");
+    const std::string horaInicio = lerTexto("Hora Inicio (HH:MM): ");
+    const std::string horaFim = lerTexto("Hora Fim (HH:MM): ");
+    const int convidados = lerInteiro("Numero de Convidados: ");
 
     int idReserva = reservaService_.criar(moradorId, areaId, data, horaInicio, horaFim, convidados);
     if (idReserva > 0) {
@@ -105,10 +121,8 @@ void MenuReservas::criarReserva() {
 }
 
 void MenuReservas::listarMinhasReservas() {
-    int moradorId;
     std::cout << "\n--- Reservas do Morador ---\n";
-    std::cout << "ID do Morador: ";
-    std::cin >> moradorId;
+    const int moradorId = lerInteiro("ID do Morador: ");
 
     auto reservas = reservaService_.listarPorMorador(moradorId);
     if (reservas.empty()) {
@@ -116,19 +130,17 @@ void MenuReservas::listarMinhasReservas() {
         return;
     }
     for (const auto& r : reservas) {
-        std::cout << "ID Reserva: " << r->getId()
-                  << " | A'rea ID: " << r->getAreaId()
-                  << " | Data: " << r->getData()
-                  << " | Hor'ario: " << r->getHoraInicio() << " a's " << r->getHoraFim()
-                  << " | Valor: R$ " << r->getValor() << "\n";
+        std::cout << "ID Reserva: " << r.getId()
+                  << " | A'rea ID: " << r.getAreaId()
+                  << " | Data: " << r.getData()
+                  << " | Hor'ario: " << r.getHoraInicio() << " a's " << r.getHoraFim()
+                  << " | Valor: R$ " << r.getValor() << "\n";
     }
 }
 
 void MenuReservas::cancelarReserva() {
-    int reservaId;
     std::cout << "\n--- Cancelar Reserva ---\n";
-    std::cout << "ID da Reserva: ";
-    std::cin >> reservaId;
+    const int reservaId = lerInteiro("ID da Reserva: ");
 
     if (reservaService_.cancelar(reservaId)) {
         std::cout << "Reserva cancelada com sucesso!\n";
