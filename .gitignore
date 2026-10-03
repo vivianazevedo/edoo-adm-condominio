@@ -1,2 +1,13 @@
+# pastas de build
 build/
+build-*/
+
+# banco de desenvolvimento
 *.db
+
+# ide
+.vscode/
+.idea/
+
+# segredos
+.env
