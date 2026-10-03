@@ -1,31 +1,41 @@
-#ifndef TELAMORADORES_H
-#define TELAMORADORES_H
+#pragma once
 
-#include <QWidget>
+#include "repositorio/RepositorioApartamento.h"
+#include "repositorio/RepositorioPessoa.h"
+#include "servico/ApartamentoService.h"
+#include "servico/MoradorService.h"
+
+#include <QComboBox>
+#include <QDateEdit>
 #include <QLineEdit>
-#include <QPushButton>
+#include <QSpinBox>
 #include <QTableWidget>
-#include <QVBoxLayout>
+#include <QWidget>
 
+// CRUD de apartamentos e moradores, sempre por meio dos servicos.
 class TelaMoradores : public QWidget {
     Q_OBJECT
 
 public:
-    explicit TelaMoradores(QWidget *parent = nullptr);
-    ~TelaMoradores();
-
-private slots:
-    void aoClicarCadastrar();
+    explicit TelaMoradores(QWidget* parent = nullptr);
+    void atualizar();
 
 private:
-    QLineEdit *txtNome;
-    QLineEdit *txtCpf;
-    QLineEdit *txtTelefone;
-    QLineEdit *txtApartamento;
-    QPushButton *btnCadastrar;
-    QTableWidget *tabelaMoradores;
+    RepositorioApartamento repoApartamentos_;
+    RepositorioPessoa repoPessoas_;
+    ApartamentoService apartamentos_;
+    MoradorService moradores_;
 
-    void configurarLayout();
+    QLineEdit* bloco_ = nullptr;
+    QLineEdit* numero_ = nullptr;
+    QSpinBox* andar_ = nullptr;
+    QTableWidget* tabelaApartamentos_ = nullptr;
+
+    QLineEdit* nome_ = nullptr;
+    QLineEdit* cpf_ = nullptr;
+    QLineEdit* telefone_ = nullptr;
+    QComboBox* apartamento_ = nullptr;
+    QComboBox* ocupacao_ = nullptr;
+    QDateEdit* entrada_ = nullptr;
+    QTableWidget* tabelaMoradores_ = nullptr;
 };
-
-#endif // TELAMORADORES_H

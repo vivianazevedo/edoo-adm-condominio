@@ -85,7 +85,34 @@ endif()
 include(CTest)
 
 if(BUILD_TESTING)
+
     add_test(NAME terminal_inicia COMMAND condominio_terminal --smoke)
+
+    if(Qt6_FOUND)
+        add_executable(test_gui_fluxos
+            tests/test_gui_fluxos.cpp
+            src/interface/MenuPrincipal.cpp
+            src/interface/TelaMoradores.cpp
+            src/interface/TelaReservas.cpp
+            src/interface/TelaVisitas.cpp
+            include/interface/MenuPrincipal.h
+            include/interface/TelaMoradores.h
+            include/interface/TelaReservas.h
+            include/interface/TelaVisitas.h
+        )
+        target_include_directories(test_gui_fluxos PRIVATE include)
+        target_link_libraries(test_gui_fluxos PRIVATE Qt6::Widgets condominio_core)
+        set_target_properties(test_gui_fluxos PROPERTIES AUTOMOC ON AUTORCC ON AUTOUIC ON)
+        add_test(NAME gui_fluxos
+                 COMMAND test_gui_fluxos "${CMAKE_CURRENT_SOURCE_DIR}/sql/schema.sql")
+        set_tests_properties(gui_fluxos PROPERTIES
+            ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+        if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.22)
+            set_tests_properties(gui_fluxos PROPERTIES
+                ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:$<TARGET_FILE_DIR:Qt6::Core>")
+        endif()
+    endif()
+
 
     add_executable(test_database_i02 tests/test_database_i02.cpp)
     target_link_libraries(test_database_i02 PRIVATE condominio_core)
