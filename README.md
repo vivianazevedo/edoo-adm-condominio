@@ -1,105 +1,258 @@
 # Sistema de Gestão de Condomínio
 
-Sistema de informação em **C++ orientado a objetos** para administrar um condomínio: moradores, apartamentos, visitantes, funcionários, reservas de áreas comuns e avisos importantes.
+Sistema de informação em **C++ orientado a objetos** para administrar um condomínio: apartamentos, moradores, funcionários, visitantes, áreas comuns e reservas. Os dados ficam em um banco **SQLite** e o sistema pode ser usado por uma **interface gráfica (Qt 6)** ou pelo **terminal**.
 
 > Projeto prático da disciplina **CIN0135 – Estruturas de Dados Orientadas a Objetos**
 > Centro de Informática (CIn) – UFPE · Semestre 2026.2 · Prof. Francisco Paulo Magalhães Simões
 
 - **Página do projeto:** _[link do github.io]_
 - **Vídeo de apresentação:** _[link do YouTube]_
-- **Relatório:** [`docs/relatorio.pdf`](docs/relatorio.pdf)
+- **Relatório:** _[link do relatório]_
+
+## Equipe
+
+Vivian Azevedo · Clécio Muniz · Sâmia Freitas · Beatriz Luna
 
 ---
 
-## Objetivo
+## Sumário
 
-Oferecer uma primeira experiência prática com **Programação Orientada a Objetos em C++**, construindo um sistema com **CRUD conectado a um banco de dados**, aplicando classes, herança, polimorfismo, encapsulamento, ponteiros/referências e design patterns.
+1. [Funcionalidades](#funcionalidades)
+2. [Como rodar o projeto](#como-rodar-o-projeto)
+3. [Como usar](#como-usar)
+4. [Regras de negócio](#regras-de-negócio)
+5. [Arquitetura](#arquitetura)
+6. [Conceitos de POO aplicados](#conceitos-de-poo-aplicados)
+7. [Banco de dados](#banco-de-dados)
+8. [Estrutura do repositório](#estrutura-do-repositório)
+9. [Documentação](#documentação)
+10. [Fluxo de trabalho em equipe](#fluxo-de-trabalho-em-equipe)
+11. [Referências](#referências)
+
+---
 
 ## Funcionalidades
 
-- **Moradores e apartamentos:** cadastro, consulta, atualização e remoção
-- **Visitantes:** registro de entrada e saída, com histórico de visitas por apartamento
-- **Funcionários:** cadastro de porteiros e zeladores, com cargo e turno
-- **Áreas comuns:** salão de festas, piscina e churrasqueira, cada uma com suas regras
-- **Reservas:** criar, consultar e cancelar, com validação de conflito de horário, capacidade e horário de funcionamento
-- **Avisos:** publicação de avisos gerais, urgentes e de manutenção, com data de expiração
+- **Apartamentos:** cadastro, listagem, edição e remoção (CRUD completo).
+- **Moradores:** cadastro vinculado a um apartamento, com tipo de ocupação (proprietário, inquilino ou dependente), listagem geral ou por apartamento, edição e remoção.
+- **Funcionários:** cadastro com cargo (porteiro, zelador, faxineiro ou administrador) e turno.
+- **Visitantes e visitas:** cadastro de visitantes, registro de entrada e de saída por um porteiro, e histórico de visitas por apartamento.
+- **Áreas comuns:** salão de festas, piscina e churrasqueira, cada uma com capacidade, taxa-base e horário de funcionamento.
+- **Reservas:** criar, consultar por morador e cancelar, com validação de conflito de horário, capacidade e horário de funcionamento.
+
+Há duas formas de usar o sistema, ambas sobre o mesmo núcleo e o mesmo banco:
+
+- `condominio_gui`: interface gráfica Qt 6 com três abas (Moradores e Aptos, Áreas e Reservas, Portaria e Visitas).
+- `condominio_terminal`: interface em menus no terminal.
+
+---
+
+## Como rodar o projeto
+
+### 1. Pré-requisitos
+
+| Ferramenta | Para quê | Obrigatório? |
+|---|---|---|
+| Compilador C++17 (GCC, Clang ou MSVC) | compilar o código | sim |
+| [CMake](https://cmake.org/) 3.16 ou superior | configurar e compilar | sim |
+| [Qt 6](https://www.qt.io/download) (módulo Widgets) | interface gráfica | só para a GUI |
+
+O SQLite já vem dentro do repositório (`third_party/sqlite`), então **não precisa instalar nada** para o banco.
+
+Se o Qt 6 não for encontrado, o CMake avisa e compila apenas o núcleo, o terminal e os testes. A GUI só é gerada quando o Qt está instalado.
+
+**macOS (Homebrew)**
+
+```bash
+xcode-select --install     # compilador, se ainda não tiver
+brew install cmake qt
+```
+
+**Linux (Ubuntu/Debian)**
+
+```bash
+sudo apt install build-essential cmake qt6-base-dev
+```
+
+**Windows**
+
+Instale o Visual Studio (com o componente "Desenvolvimento para desktop com C++"), o CMake e o Qt 6 para a mesma versão do compilador. Use o **Developer Command Prompt** do Visual Studio para os comandos abaixo.
+
+### 2. Clonar o repositório
+
+```bash
+git clone https://github.com/vivianazevedo/edoo-adm-condominio
+cd edoo-adm-condominio
+```
+
+### 3. Compilar
+
+**macOS**
+
+```bash
+cmake -S . -B build -DCMAKE_PREFIX_PATH="$(brew --prefix qt)"
+cmake --build build -j4
+```
+
+**Linux**
+
+```bash
+cmake -S . -B build
+cmake --build build -j4
+```
+
+**Windows (Developer Command Prompt)**
+
+```powershell
+cmake -S . -B build -G "NMake Makefiles" -DCMAKE_PREFIX_PATH="CAMINHO_DA_INSTALACAO_DO_QT"
+cmake --build build
+```
+
+No final da configuração do CMake, **não** pode aparecer a mensagem `Qt 6 Widgets nao encontrado` se você quer a interface gráfica. Se aparecer, informe a pasta do Qt em `-DCMAKE_PREFIX_PATH`.
+
+### 4. Executar
+
+Rode sempre de **dentro da pasta `build`**: é lá que o programa encontra o `sql/schema.sql` (o CMake copia a pasta `sql/` para o build) e é onde o arquivo `condominio.db` é criado.
+
+```bash
+cd build
+./condominio_gui          # interface gráfica (Linux e macOS)
+./condominio_terminal     # versão no terminal
+```
+
+No Windows: `condominio_gui.exe` e `condominio_terminal.exe`. As DLLs do Qt precisam estar no `PATH` para a GUI abrir.
+
+Na primeira execução, o banco `condominio.db` é criado automaticamente a partir de `sql/schema.sql`. Para recomeçar do zero, feche o programa e apague o arquivo `condominio.db`. Para reencontrar seus dados, execute sempre a partir da mesma pasta.
+
+### 5. Rodar os testes
+
+Na raiz do projeto:
+
+```bash
+ctest --test-dir build --output-on-failure
+```
+
+São 13 testes (12 se o Qt não estiver instalado), cobrindo banco, repositórios, fábricas, serviços, fluxos da GUI e cenários de integração. O resultado esperado é `100% tests passed`. Detalhes em [`docs/testes.md`](docs/testes.md).
+
+### 6. Dados de exemplo (opcional)
+
+O arquivo `sql/seed.sql` tem dados fictícios (um apartamento, um morador, um porteiro, um visitante, uma área e uma reserva) para demonstração. Ele **não** é aplicado automaticamente. Use apenas em um banco vazio, depois de abrir o sistema uma vez para criar as tabelas:
+
+```bash
+cd build
+sqlite3 condominio.db < ../sql/seed.sql
+```
+
+### Problemas comuns
+
+| Sintoma | Causa provável | O que fazer |
+|---|---|---|
+| `Qt 6 Widgets nao encontrado` | O CMake não achou o Qt | Passe `-DCMAKE_PREFIX_PATH` com a pasta de instalação do Qt (no macOS: `$(brew --prefix qt)`) e apague a pasta `build` antes de configurar de novo |
+| `Falha ao iniciar o sistema` | O programa não encontrou o `sql/schema.sql` | Execute de dentro da pasta `build` |
+| Os dados sumiram | O `condominio.db` foi criado em outra pasta | Execute sempre a partir da mesma pasta |
+| A janela não abre no Windows | DLLs do Qt fora do `PATH` | Adicione a pasta `bin` do Qt ao `PATH` |
+
+Instruções complementares em [`docs/execucao-local.md`](docs/execucao-local.md) e [`docs/interface-grafica.md`](docs/interface-grafica.md).
+
+---
+
+## Como usar
+
+A ordem importa, porque cada cadastro depende do anterior.
+
+1. **Moradores e Aptos:** cadastre primeiro um **apartamento** e depois um **morador** nele. Clique numa linha da tabela para preencher o formulário antes de editar ou remover.
+2. **Portaria e Visitas:** cadastre um **funcionário com cargo Porteiro** e um **visitante**. Selecione visitante, apartamento e porteiro para registrar a entrada. Escolha a visita na tabela para registrar a saída. O filtro mostra o histórico por apartamento.
+3. **Áreas e Reservas:** cadastre uma **área comum**, escolha o **morador** e reserve um horário. Se o horário conflitar, ultrapassar a capacidade ou estiver fora do funcionamento, o sistema recusa e explica o motivo.
+
+Os erros das regras de negócio aparecem em janelas explicativas, e os dados são atualizados ao trocar de aba.
+
+---
+
+## Regras de negócio
+
+As regras ficam na camada de serviço e são verificadas pelos testes automáticos.
+
+- Não é possível reservar uma área em horário que conflite com outra reserva ativa.
+- A reserva respeita a capacidade, a duração e o horário de funcionamento de cada área.
+- O cancelamento de reserva exige **24 horas de antecedência**, e uma reserva já cancelada não pode ser cancelada de novo.
+- Somente um funcionário com cargo de **porteiro** registra entrada de visitantes; uma visita só recebe uma saída.
+- O **CPF é único** entre todas as pessoas (moradores, funcionários e visitantes).
+- Um apartamento com moradores não pode ser removido.
+- Um morador com reservas não pode ser removido.
+- Um funcionário com visitas registradas não pode ser removido.
+- Não pode haver dois apartamentos com o mesmo bloco e número.
+
+---
 
 ## Arquitetura
 
-O sistema é organizado em camadas, para que cada parte possa ser desenvolvida e testada separadamente:
+O sistema é dividido em camadas, para que cada parte seja desenvolvida e testada separadamente. As telas não executam SQL diretamente: passam pelos serviços e repositórios.
 
 ```
-┌────────────────────────────┐
-│   Interface (Qt Widgets)   │   telas e interação com o usuário
-├────────────────────────────┤
-│   Serviços                 │   regras de negócio
-├────────────────────────────┤
-│   Repositórios (DAO)       │   CRUD, isolando o SQL
-├────────────────────────────┤
-│   Banco de dados           │   SQLite
-└────────────────────────────┘
-        Modelo (entidades) usado por todas as camadas
+┌────────────────────────────────────────┐
+│  Interface (Qt Widgets / terminal)     │   telas e interação com o usuário
+├────────────────────────────────────────┤
+│  Serviços                              │   regras de negócio
+├────────────────────────────────────────┤
+│  Repositórios (DAO)                    │   CRUD, isolando o SQL
+├────────────────────────────────────────┤
+│  Banco de dados (SQLite)               │   persistência
+└────────────────────────────────────────┘
+      Modelo (entidades) usado por todas as camadas
 ```
 
 ### Hierarquia de classes
 
 ```
 Pessoa (abstrata)
-├── Morador
+├── Morador        (tipo de ocupação: proprietário, inquilino, dependente)
 ├── Visitante
-└── Funcionario
-    ├── Porteiro
-    └── Zelador
+└── Funcionario    (cargo: porteiro, zelador, faxineiro, administrador)
 
 AreaComum (abstrata)
 ├── SalaoFestas
 ├── Piscina
 └── Churrasqueira
 
-Aviso
-├── AvisoGeral
-├── AvisoUrgente
-└── AvisoManutencao
-
-Apartamento · Reserva
+Sem herança: Apartamento, Reserva, Visita
 ```
 
-O diagrama de classes completo está em [`docs/diagrama-classes.png`](docs/diagrama-classes.png).
+### Design patterns
+
+- **Singleton:** conexão única com o banco (`Database::instancia()`).
+- **Repository / DAO:** acesso a dados isolado na interface `IRepositorio<T>` e suas implementações.
+- **Factory:** `FabricaPessoa` e `FabricaAreaComum` criam o objeto certo a partir do tipo salvo no banco.
+
+Mais detalhes em [`docs/relatorio-arquitetura.md`](docs/relatorio-arquitetura.md).
+
+---
 
 ## Conceitos de POO aplicados
 
 | Conceito | Onde aparece no código |
 |---|---|
-| **Classes e objetos** | Todas as entidades do domínio (`Morador`, `Reserva`, `Apartamento`...) |
-| **Herança** | Hierarquias de `Pessoa`, `AreaComum` e `Aviso` |
-| **Polimorfismo** | Cada `AreaComum` calcula taxa e valida reservas de forma própria (`virtual` / `override`) |
-| **Classes abstratas** | `Pessoa`, `AreaComum` e a interface `IRepositorio` |
-| **Encapsulamento e modificadores de acesso** | Atributos `private`/`protected`, acesso por getters e setters com validação |
-| **Ponteiros e referências** | `unique_ptr` em coleções polimórficas, `const&` em parâmetros, ponteiros em `Reserva` |
-| **Composição e associação** | `Apartamento` ↔ `Morador`; `Reserva` ↔ `Morador` + `AreaComum` |
+| **Classes e objetos** | Todas as entidades do domínio (`Morador`, `Reserva`, `Apartamento`, `Visita`...) |
+| **Herança** | Hierarquias de `Pessoa` e `AreaComum` |
+| **Polimorfismo** | Cada área comum calcula a taxa e valida a reserva à sua maneira (`virtual` / `override`); cada pessoa informa o próprio `tipo()` |
+| **Classes abstratas** | `Pessoa`, `AreaComum` e a interface `IRepositorio<T>` |
+| **Encapsulamento e modificadores de acesso** | Atributos privados/protegidos, acesso por getters e validação no construtor |
+| **Ponteiros e referências** | `unique_ptr` em objetos criados pelas fábricas e repositórios, `const&` em parâmetros |
+| **Composição e associação** | Apartamento ↔ morador; reserva liga morador e área comum; visita liga visitante, apartamento e porteiro |
+| **Tratamento de erros** | Hierarquia de exceções própria (`ErroValidacao`, `ErroRegraNegocio`, `ErroBanco`) |
 
-### Design patterns
-
-- **Singleton:** conexão única com o banco (`Database`)
-- **Repository / DAO:** acesso a dados isolado em `IRepositorio` e suas implementações
-- **Factory:** criação de `Pessoa` e `AreaComum` a partir do tipo salvo no banco
-- **Observer:** atualização automática das telas (signals/slots do Qt)
+---
 
 ## Banco de dados
 
 Utilizamos **SQLite**: um único arquivo `.db`, sem servidor para configurar, o que permite a qualquer pessoa clonar e executar o projeto.
 
-Tabelas: `apartamento`, `pessoa`, `morador`, `funcionario`, `visita`, `area_comum`, `reserva`, `aviso`.
+Tabelas: `apartamento`, `pessoa`, `morador`, `funcionario`, `area_comum`, `reserva` e `visita`. Visitantes ficam na tabela `pessoa`, e cada visita é um registro separado, para guardar o histórico.
 
-O script de criação está em [`sql/schema.sql`](sql/schema.sql).
+- Script de criação: [`sql/schema.sql`](sql/schema.sql)
+- Dados fictícios para demonstração: [`sql/seed.sql`](sql/seed.sql)
+- Diagrama entidade-relacionamento: [`docs/diagrama-er.png`](docs/diagrama-er.png) (explicação em [`docs/modelo-dados.md`](docs/modelo-dados.md))
 
-## Tecnologias
-
-- **Linguagem:** C++17
-- **Build:** CMake
-- **Interface gráfica:** Qt 6 (Widgets)
-- **Banco de dados:** SQLite
-- **Versionamento:** Git e GitHub
+---
 
 ## Estrutura do repositório
 
@@ -107,88 +260,57 @@ O script de criação está em [`sql/schema.sql`](sql/schema.sql).
 .
 ├── CMakeLists.txt
 ├── README.md
-├── docs/                 # relatório, diagrama de classes, imagens
+├── docs/                  # relatório de arquitetura, diagrama ER, testes, roteiro do vídeo
 ├── sql/
-│   └── schema.sql        # criação das tabelas
-├── include/              # arquivos de cabeçalho (.h)
+│   ├── schema.sql         # criação das tabelas
+│   └── seed.sql           # dados fictícios de demonstração
+├── include/               # cabeçalhos (.h)
+│   ├── modelo/            # entidades
+│   ├── repositorio/       # interfaces e repositórios SQLite
+│   ├── servico/           # regras de negócio
+│   ├── infra/             # banco, fábricas e exceções
+│   └── interface/         # telas Qt e menus do terminal
+├── src/                   # implementações (.cpp)
 │   ├── modelo/
 │   ├── repositorio/
-│   ├── infra/
 │   ├── servico/
-│   └── interface/
-├── src/                  # implementações (.cpp)
-│   ├── modelo/
-│   ├── repositorio/
 │   ├── infra/
-│   ├── servico/
 │   ├── interface/
-│   └── main.cpp
-└── tests/                # testes do núcleo (terminal)
+│   ├── terminal/          # main do terminal
+│   └── main.cpp           # main da interface gráfica
+├── tests/                 # testes automáticos (CTest)
+└── third_party/sqlite/    # SQLite embutido (amalgamation)
 ```
 
-> Ajustem esta árvore conforme a estrutura real do projeto.
+---
 
-## Como compilar e executar
+## Documentação
 
-### Pré-requisitos
+| Documento | Conteúdo |
+|---|---|
+| [`docs/execucao-local.md`](docs/execucao-local.md) | Compilar e executar localmente |
+| [`docs/interface-grafica.md`](docs/interface-grafica.md) | Uso e verificação da interface Qt |
+| [`docs/relatorio-arquitetura.md`](docs/relatorio-arquitetura.md) | Camadas e padrões de projeto |
+| [`docs/modelo-dados.md`](docs/modelo-dados.md) | Modelo entidade-relacionamento |
+| [`docs/testes.md`](docs/testes.md) | Cenários de integração e resultados |
+| [`docs/roteiro-video.md`](docs/roteiro-video.md) | Roteiro do vídeo de apresentação |
+| [`docs/irepositorio.md`](docs/irepositorio.md) e [`docs/fabricas-i06.md`](docs/fabricas-i06.md) | Interface de repositório e fábricas |
 
-- Compilador com suporte a C++17 (GCC, Clang ou MSVC)
-- [CMake](https://cmake.org/) 3.16 ou superior
-- [Qt 6](https://www.qt.io/download) (módulo Widgets)
-- SQLite3 (biblioteca de desenvolvimento)
-
-### Passo a passo
-
-```bash
-# 1. Clonar o repositório
-git clone <URL-DO-REPOSITORIO>
-cd <NOME-DA-PASTA>
-
-# 2. Configurar e compilar
-cmake -S . -B build
-cmake --build build
-
-# 3. Executar
-./build/condominio        # Linux / macOS
-build\condominio.exe      # Windows
-```
-
-Na primeira execução, o banco `condominio.db` é criado automaticamente a partir de `sql/schema.sql`.
-
-> Se o CMake não encontrar o Qt, informe o caminho da instalação:
-> `cmake -S . -B build -DCMAKE_PREFIX_PATH=<caminho-do-Qt>`
-
-## Como usar
-
-1. Cadastre os **apartamentos** e os **moradores**
-2. Cadastre as **áreas comuns** com capacidade, taxa e horário de funcionamento
-3. Registre **visitantes** na portaria
-4. Crie **reservas** (o sistema bloqueia conflitos de horário e excesso de convidados)
-5. Publique **avisos** para os moradores
-
-_Adicionar capturas de tela em `docs/img/` e referenciá-las aqui._
-
-## Regras de negócio
-
-- Não é possível reservar uma área em horário que conflite com outra reserva
-- A reserva respeita a capacidade e o horário de funcionamento de cada área
-- O cancelamento só é permitido com antecedência mínima definida por área
-- Apenas funcionários com cargo de porteiro registram entrada e saída de visitantes
-- Avisos urgentes aparecem em destaque; avisos expirados deixam de ser exibidos
-
+---
 
 ## Fluxo de trabalho em equipe
 
-- Branch principal: `main` (protegida, sem commits diretos)
-- Cada funcionalidade em uma branch própria: `feature/nome-da-funcionalidade`
-- Integração por **Pull Request** com revisão de pelo menos uma outra pessoa
-- Mensagens de commit curtas e objetivas, em português
+- Branch principal: `main`, sem commits diretos.
+- Cada funcionalidade em uma branch própria: `feature/nome-da-funcionalidade`.
+- Integração por **Pull Request**, com revisão de pelo menos uma outra pessoa.
+- Mensagens de commit curtas e objetivas, em português.
 
 ## Referências
 
 - Kirch-Prinz, U.; Prinz, P. _A Complete Guide to Programming in C++_. 2002.
 - [Documentação do Qt](https://doc.qt.io/)
 - [Documentação do SQLite](https://www.sqlite.org/docs.html)
+- [CMake](https://cmake.org/documentation/)
 - [cppreference](https://en.cppreference.com/)
 
 ## Licença
