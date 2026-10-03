@@ -13,9 +13,14 @@ namespace {
 // devolve a data e hora de agora no formato AAAA-MM-DD HH:MM (o mesmo da visita)
 string agoraTexto() {
     time_t tempo = chrono::system_clock::to_time_t(chrono::system_clock::now());
-    tm* local = localtime(&tempo);
+    tm local{};
+#if defined(_WIN32)
+    localtime_s(&local, &tempo);
+#else
+    localtime_r(&tempo, &local);
+#endif
     ostringstream texto;
-    texto << put_time(local, "%Y-%m-%d %H:%M");
+    texto << put_time(&local, "%Y-%m-%d %H:%M");
     return texto.str();
 }
 

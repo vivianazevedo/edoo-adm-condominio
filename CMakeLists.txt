@@ -42,10 +42,23 @@ add_library(condominio_core
 target_include_directories(condominio_core PUBLIC include)
 target_link_libraries(condominio_core PUBLIC SQLite::SQLite3)
 
+# Os executaveis encontram o schema ao iniciar a partir da pasta de build.
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/sql" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+
+add_executable(condominio_terminal
+    src/terminal/main_terminal.cpp
+    src/interface/MenuMoradores.cpp
+    src/interface/MenuReservas.cpp
+)
+target_include_directories(condominio_terminal PRIVATE include)
+target_link_libraries(condominio_terminal PRIVATE condominio_core)
+
 if(MSVC)
     target_compile_options(condominio_core PRIVATE /W4)
+    target_compile_options(condominio_terminal PRIVATE /W4)
 else()
     target_compile_options(condominio_core PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(condominio_terminal PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
 find_package(Qt6 QUIET COMPONENTS Widgets)
@@ -72,6 +85,8 @@ endif()
 include(CTest)
 
 if(BUILD_TESTING)
+    add_test(NAME terminal_inicia COMMAND condominio_terminal --smoke)
+
     add_executable(test_database_i02 tests/test_database_i02.cpp)
     target_link_libraries(test_database_i02 PRIVATE condominio_core)
 
