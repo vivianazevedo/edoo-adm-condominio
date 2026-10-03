@@ -1,0 +1,51 @@
+digraph Condominio {
+  graph [rankdir=TB, splines=spline, nodesep=0.55, ranksep=0.85, fontname="DejaVu Sans", fontsize=22, labelloc=t, label=<<B>Diagrama de classes - Sistema de Gestão de Condomínio</B>>, pad=0.4, bgcolor=white];
+  node [shape=plain, fontname="DejaVu Sans", fontsize=11];
+  edge [fontname="DejaVu Sans", fontsize=10, color="#333333", arrowsize=1.0];
+Pessoa [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5" BGCOLOR="white" COLOR="#444444"><TR><TD BGCOLOR="#D9D4F5" ALIGN="CENTER">«abstract»<BR/><B><I>Pessoa</I></B></TD></TR><HR/><TR><TD ALIGN="LEFT" BALIGN="LEFT">- id_ : int<BR/>- nome_ : string<BR/>- cpf_ : string<BR/>- telefone_ : string</TD></TR><HR/><TR><TD ALIGN="LEFT" BALIGN="LEFT"><I>+ tipo() : string</I><BR/>+ id() : int<BR/>+ nome() : string<BR/>+ cpf() : string<BR/>+ telefone() : string<BR/>+ setNome(nome) : void<BR/>+ setCpf(cpf) : void<BR/>+ setTelefone(telefone) : void<BR/><U>+ cpfValido(cpf) : bool</U><BR/><U>+ normalizarCpf(cpf) : string</U></TD></TR></TABLE>>];
+Morador [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5" BGCOLOR="white" COLOR="#444444"><TR><TD BGCOLOR="#CDEBC5" ALIGN="CENTER"><B>Morador</B></TD></TR><HR/><TR><TD ALIGN="LEFT" BALIGN="LEFT">- apartamentoId_ : int<BR/>- tipoOcupacao_ : TipoOcupacao<BR/>- dataEntrada_ : string</TD></TR><HR/><TR><TD ALIGN="LEFT" BALIGN="LEFT">+ tipo() : string<BR/>+ apartamentoId() : int<BR/>+ tipoOcupacao() : TipoOcupacao<BR/>+ setApartamentoId(id) : void<BR/>+ setDataEntrada(data) : void</TD></TR></TABLE>>];
+Visitante [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5" BGCOLOR="white" COLOR="#444444"><TR><TD BGCOLOR="#F9C9D4" ALIGN="CENTER"><B>Visitante</B></TD></TR><HR/><TR><TD ALIGN="LEFT" BALIGN="LEFT">+ tipo() : string</TD></TR></TABLE>>];
+Funcionario [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5" BGCOLOR="white" COLOR="#444444"><TR><TD BGCOLOR="#C9E0F8" ALIGN="CENTER"><B>Funcionario</B></TD></TR><HR/><TR><TD ALIGN="LEFT" BALIGN="LEFT">- cargo_ : Cargo<BR/>- turno_ : string<BR/>- dataAdmissao_ : string</TD></TR><HR/><TR><TD ALIGN="LEFT" BALIGN="LEFT">+ tipo() : string<BR/>+ cargo() : Cargo<BR/>+ ehPorteiro() : bool<BR/>+ setCargo(cargo) : void<BR/>+ setTurno(turno) : void</TD></TR></TABLE>>];
+TipoOcupacao [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5" BGCOLOR="white" COLOR="#444444"><TR><TD BGCOLOR="#FCE9B0" ALIGN="CENTER">«enumeration»<BR/><B>TipoOcupacao</B></TD></TR><HR/><TR><TD ALIGN="LEFT" BALIGN="LEFT">Proprietario<BR/>Inquilino<BR/>Dependente</TD></TR></TABLE>>];
+Cargo [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5" BGCOLOR="white" COLOR="#444444"><TR><TD BGCOLOR="#FCE9B0" ALIGN="CENTER">«enumeration»<BR/><B>Cargo</B></TD></TR><HR/><TR><TD ALIGN="LEFT" BALIGN="LEFT">Porteiro<BR/>Zelador<BR/>Faxineiro<BR/>Administrador</TD></TR></TABLE>>];
+Apartamento [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5" BGCOLOR="white" COLOR="#444444"><TR><TD BGCOLOR="#CBEDF0" ALIGN="CENTER"><B>Apartamento</B></TD></TR><HR/><TR><TD ALIGN="LEFT" BALIGN="LEFT">- id_ : int<BR/>- bloco_ : string<BR/>- numero_ : string<BR/>- andar_ : int<BR/>- moradores_ : vector&lt;Morador*&gt;</TD></TR><HR/><TR><TD ALIGN="LEFT" BALIGN="LEFT">+ adicionarMorador(morador) : void<BR/>+ removerMorador(moradorId) : bool<BR/>+ temMoradores() : bool<BR/>+ quantidadeMoradores() : int<BR/>+ descricao() : string</TD></TR></TABLE>>];
+Visita [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5" BGCOLOR="white" COLOR="#444444"><TR><TD BGCOLOR="#DCD0F2" ALIGN="CENTER"><B>Visita</B></TD></TR><HR/><TR><TD ALIGN="LEFT" BALIGN="LEFT">- id_ : int<BR/>- visitanteId_ : int<BR/>- apartamentoId_ : int<BR/>- registradoPor_ : int<BR/>- entrada_ : string<BR/>- saida_ : string</TD></TR><HR/><TR><TD ALIGN="LEFT" BALIGN="LEFT">+ estaAberta() : bool<BR/>+ descricao() : string</TD></TR></TABLE>>];
+AreaComum [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5" BGCOLOR="white" COLOR="#444444"><TR><TD BGCOLOR="#D9D4F5" ALIGN="CENTER">«abstract»<BR/><B><I>AreaComum</I></B></TD></TR><HR/><TR><TD ALIGN="LEFT" BALIGN="LEFT">- id_ : int<BR/>- nome_ : string<BR/>- capacidade_ : int<BR/>- taxaBase_ : double<BR/>- horaAbertura_ : string<BR/>- horaFechamento_ : string</TD></TR><HR/><TR><TD ALIGN="LEFT" BALIGN="LEFT"><I>+ getTipo() : string</I><BR/><I>+ calcularTaxa(convidados) : double</I><BR/><I>+ validarReserva(convidados, inicio, fim) : bool</I></TD></TR></TABLE>>];
+SalaoFestas [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5" BGCOLOR="white" COLOR="#444444"><TR><TD BGCOLOR="#F9C9D4" ALIGN="CENTER">«final»<BR/><B>SalaoFestas</B></TD></TR><HR/><TR><TD ALIGN="LEFT" BALIGN="LEFT">+ getTipo() : string<BR/>+ calcularTaxa(convidados) : double<BR/>+ validarReserva(convidados, inicio, fim) : bool</TD></TR></TABLE>>];
+Piscina [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5" BGCOLOR="white" COLOR="#444444"><TR><TD BGCOLOR="#C9E0F8" ALIGN="CENTER">«final»<BR/><B>Piscina</B></TD></TR><HR/><TR><TD ALIGN="LEFT" BALIGN="LEFT">+ getTipo() : string<BR/>+ calcularTaxa(convidados) : double<BR/>+ validarReserva(convidados, inicio, fim) : bool</TD></TR></TABLE>>];
+Churrasqueira [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5" BGCOLOR="white" COLOR="#444444"><TR><TD BGCOLOR="#CDEBC5" ALIGN="CENTER">«final»<BR/><B>Churrasqueira</B></TD></TR><HR/><TR><TD ALIGN="LEFT" BALIGN="LEFT">+ getTipo() : string<BR/>+ calcularTaxa(convidados) : double<BR/>+ validarReserva(convidados, inicio, fim) : bool</TD></TR></TABLE>>];
+Reserva [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5" BGCOLOR="white" COLOR="#444444"><TR><TD BGCOLOR="#F9C9D4" ALIGN="CENTER"><B>Reserva</B></TD></TR><HR/><TR><TD ALIGN="LEFT" BALIGN="LEFT">- id_ : int<BR/>- moradorId_ : int<BR/>- areaId_ : int<BR/>- data_ : string<BR/>- horaInicio_ : string<BR/>- horaFim_ : string<BR/>- numConvidados_ : int<BR/>- status_ : StatusReserva<BR/>- valor_ : double</TD></TR><HR/><TR><TD ALIGN="LEFT" BALIGN="LEFT">+ setStatus(status) : void</TD></TR></TABLE>>];
+StatusReserva [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5" BGCOLOR="white" COLOR="#444444"><TR><TD BGCOLOR="#FCE9B0" ALIGN="CENTER">«enumeration»<BR/><B>StatusReserva</B></TD></TR><HR/><TR><TD ALIGN="LEFT" BALIGN="LEFT">ATIVA<BR/>CANCELADA</TD></TR></TABLE>>];
+StdException [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5" BGCOLOR="white" COLOR="#444444"><TR><TD BGCOLOR="#D0D0D0" ALIGN="CENTER"><B>std::exception</B></TD></TR></TABLE>>];
+ErroCondominio [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5" BGCOLOR="white" COLOR="#444444"><TR><TD BGCOLOR="#D9D4F5" ALIGN="CENTER"><B>ErroCondominio</B></TD></TR><HR/><TR><TD ALIGN="LEFT" BALIGN="LEFT">- mensagem_ : string</TD></TR><HR/><TR><TD ALIGN="LEFT" BALIGN="LEFT">+ what() : const char*</TD></TR></TABLE>>];
+ErroValidacao [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5" BGCOLOR="white" COLOR="#444444"><TR><TD BGCOLOR="#F9C9D4" ALIGN="CENTER"><B>ErroValidacao</B></TD></TR></TABLE>>];
+ErroRegraNegocio [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5" BGCOLOR="white" COLOR="#444444"><TR><TD BGCOLOR="#C9E0F8" ALIGN="CENTER"><B>ErroRegraNegocio</B></TD></TR></TABLE>>];
+ErroBanco [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="5" BGCOLOR="white" COLOR="#444444"><TR><TD BGCOLOR="#CDEBC5" ALIGN="CENTER"><B>ErroBanco</B></TD></TR></TABLE>>];
+  Pessoa -> Morador [dir=back, arrowtail=empty, arrowsize=1.4];
+  Pessoa -> Visitante [dir=back, arrowtail=empty, arrowsize=1.4];
+  Pessoa -> Funcionario [dir=back, arrowtail=empty, arrowsize=1.4];
+  AreaComum -> SalaoFestas [dir=back, arrowtail=empty, arrowsize=1.4];
+  AreaComum -> Piscina [dir=back, arrowtail=empty, arrowsize=1.4];
+  AreaComum -> Churrasqueira [dir=back, arrowtail=empty, arrowsize=1.4];
+  StdException -> ErroCondominio [dir=back, arrowtail=empty, arrowsize=1.4];
+  ErroCondominio -> ErroValidacao [dir=back, arrowtail=empty, arrowsize=1.4];
+  ErroCondominio -> ErroRegraNegocio [dir=back, arrowtail=empty, arrowsize=1.4];
+  ErroCondominio -> ErroBanco [dir=back, arrowtail=empty, arrowsize=1.4];
+  Morador -> TipoOcupacao [arrowhead=vee];
+  Funcionario -> Cargo [arrowhead=vee];
+  Reserva -> StatusReserva [arrowhead=vee];
+  Apartamento -> Morador [dir=both, arrowtail=odiamond, arrowhead=none, arrowsize=1.5, taillabel="1", headlabel="0..*", labeldistance=1.8, labelangle=35, label=<moradores_>];
+  {rank=same; Apartamento; Morador; Funcionario; Visitante;}
+  Morador -> Funcionario [style=invis];
+  Funcionario -> Visitante [style=invis];
+  {rank=same; SalaoFestas; Piscina; Churrasqueira;}
+  SalaoFestas -> Piscina [style=invis];
+  Piscina -> Churrasqueira [style=invis];
+  Visitante -> Visita [dir=back, arrowtail=vee, style=dashed, label=<visitanteId_>];
+  Apartamento -> Visita [dir=back, arrowtail=vee, style=dashed, label=<apartamentoId_>];
+  Funcionario -> Visita [dir=back, arrowtail=vee, style=dashed, label=<registradoPor_ (porteiro)>];
+  Morador -> Reserva [dir=back, arrowtail=vee, style=dashed, label=<moradorId_>];
+  AreaComum -> Reserva [dir=back, arrowtail=vee, style=dashed, label=<areaId_>];
+  legenda [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2"><TR><TD ALIGN="LEFT"><B>Legenda</B></TD></TR><TR><TD ALIGN="LEFT">linha tracejada com seta aberta: dependência por id guardado (Visita e Reserva)</TD></TR><TR><TD ALIGN="LEFT">losango vazado: agregação, Apartamento guarda ponteiros não proprietários para Morador</TD></TR><TR><TD ALIGN="LEFT">triângulo vazado: herança</TD></TR></TABLE>>];
+  StatusReserva -> legenda [style=invis];
+}
