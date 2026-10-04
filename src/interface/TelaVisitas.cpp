@@ -22,6 +22,7 @@ void prepararTabela(QTableWidget* tabela, const QStringList& colunas) {
     tabela->setSelectionMode(QAbstractItemView::SingleSelection);
     tabela->setEditTriggers(QAbstractItemView::NoEditTriggers);
     tabela->setMinimumHeight(170);
+    tabela->setAlternatingRowColors(true);
 }
 
 }  // namespace
