@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sistema de Gestão de Condomínio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --azul-50: #f0f8ff;
+      --azul-100: #dbeefe;
+      --azul-300: #8ec9f5;
+      --azul-500: #3b9ae8;
+      --azul-700: #1e5a96;
+      --azul-900: #12365c;
+      --texto: #2b4059;
+      --branco: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      background: var(--azul-50);
+      color: var(--texto);
+      margin: 0;
+      line-height: 1.7;
+    }
+    a { color: var(--azul-700); }
+    h1, h2, h3 { font-family: 'Source Serif 4', Georgia, serif; }
+
+    /* Menu */
+    nav {
+      position: sticky; top: 0; z-index: 10;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(8px);
+      display: flex; justify-content: center; gap: 26px;
+      padding: 14px 20px; flex-wrap: wrap;
+      border-bottom: 1px solid var(--azul-100);
+    }
+    nav a { text-decoration: none; font-weight: 500; font-size: 0.92rem; color: var(--azul-700); }
+    nav a:hover { color: var(--azul-500); }
+
+    /* Topo */
+    .hero {
+      background: linear-gradient(135deg, var(--azul-300) 0%, var(--azul-100) 60%, var(--branco) 100%);
+      text-align: center;
+      padding: 96px 24px 110px;
+    }
+    .hero .tag {
+      display: inline-block;
+      background: var(--branco); color: var(--azul-700);
+      padding: 6px 16px; border-radius: 999px;
+      font-size: 0.82rem; font-weight: 600; letter-spacing: 0.03em;
+      margin-bottom: 22px;
+    }
+    .hero h1 { font-size: clamp(2rem, 5vw, 3.2rem); color: var(--azul-900); margin: 0 0 16px; line-height: 1.2; }
+    .hero p { max-width: 680px; margin: 0 auto 32px; font-size: 1.05rem; }
+    .botoes { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      padding: 12px 28px; border-radius: 6px;
+      text-decoration: none; font-weight: 600; font-size: 0.95rem;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(30, 90, 150, 0.2); }
+    .btn-principal { background: var(--azul-700); color: var(--branco); }
+    .btn-secundario { background: var(--branco); color: var(--azul-700); }
+
+    /* Seções */
+    main { max-width: 960px; margin: 0 auto; padding: 0 24px 40px; }
+    section { padding: 56px 0 8px; }
+    h2 {
+      color: var(--azul-900); font-size: 1.8rem; margin: 0 0 8px;
+      padding-bottom: 10px; border-bottom: 2px solid var(--azul-300);
+    }
+    .sub { margin: 0 0 28px; color: var(--azul-700); font-style: italic; }
+    .texto p { text-align: justify; margin: 0 0 16px; }
+
+    .grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 20px; }
+    .card {
+      background: var(--branco);
+      border: 1px solid var(--azul-100);
+      border-radius: 10px;
+      padding: 24px 22px;
+      box-shadow: 0 4px 14px rgba(30, 90, 150, 0.06);
+    }
+    .card .num { font-family: 'Source Serif 4', Georgia, serif; font-size: 1.6rem; font-weight: 700; color: var(--azul-300); margin-bottom: 4px; }
+    .card h3 { margin: 0 0 6px; color: var(--azul-900); font-size: 1.1rem; }
+    .card p { margin: 0; font-size: 0.92rem; }
+    .card .papel { font-size: 0.85rem; color: var(--azul-700); margin: 4px 0 0; }
+
+    .avatar {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: var(--azul-100); color: var(--azul-700);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 600; font-size: 1.1rem; margin-bottom: 12px;
+    }
+
+    .lista-objetivos { margin: 0; padding-left: 20px; }
+    .lista-objetivos li { margin-bottom: 8px; }
+
+    .tabela-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; background: var(--branco); border: 1px solid var(--azul-100); }
+    th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--azul-100); font-size: 0.93rem; vertical-align: top; }
+    th { background: var(--azul-100); color: var(--azul-900); font-weight: 600; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 10px; }
+    .chip {
+      background: var(--branco); color: var(--azul-700);
+      border: 1px solid var(--azul-300);
+      padding: 6px 16px; border-radius: 999px;
+      font-weight: 500; font-size: 0.9rem;
+    }
+
+    .imagens img {
+      max-width: 100%; border-radius: 8px;
+      border: 1px solid var(--azul-100);
+      margin-bottom: 20px; background: var(--branco);
+    }
+    .video { position: relative; padding-bottom: 56.25%; height: 0; }
+    .video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; border-radius: 8px; }
+
+    footer {
+      background: var(--azul-900); color: var(--azul-100);
+      text-align: center; padding: 28px 20px; margin-top: 56px;
+      font-size: 0.88rem;
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="#inicio">Início</a>
+    <a href="#projeto">O projeto</a>
+    <a href="#funcionalidades">Funcionalidades</a>
+    <a href="#arquitetura">Arquitetura</a>
+    <a href="#poo">Conceitos de POO</a>
+    <a href="#equipe">Equipe</a>
+    <a href="#links">Links</a>
+  </nav>
+
+  <header class="hero" id="inicio">
+    <span class="tag">CIN0135 · CIn-UFPE · 2026.2</span>
+    <h1>Sistema de Gestão de Condomínio</h1>
+    <p>Sistema de informação desenvolvido em C++ com programação orientada a objetos, voltado à administração de apartamentos, moradores, áreas comuns, reservas, visitas e funcionários.</p>
+    <div class="botoes">
+      <a class="btn btn-principal" href="#projeto">Conhecer o projeto</a>
+      <a class="btn btn-secundario" href="https://github.com/vivianazevedo/edoo-adm-condominio">Ver no GitHub</a>
+    </div>
+  </header>
+
+  <main>
+
+    <section id="projeto">
+      <h2>O projeto</h2>
+      <p class="sub">Resumo, contexto e objetivos</p>
+      <div class="texto">
+        <p><strong>Resumo:</strong> Este trabalho apresenta o desenvolvimento de um Sistema de Gestão de Condomínio, realizado como Projeto Prático da disciplina Estruturas de Dados Orientadas a Objetos (CIN0135), do Centro de Informática da UFPE, sob orientação do professor Francisco Paulo Magalhães Simões. O sistema permite cadastrar e gerenciar apartamentos, moradores, funcionários, visitantes e áreas comuns, além de controlar reservas de espaços e o registro de entrada e saída de visitas.</p>
+        <p><strong>Contexto:</strong> A administração de um condomínio envolve o controle de informações de naturezas distintas, como o cadastro de pessoas, o uso compartilhado de espaços e a segurança de acesso. Sem um sistema organizado, essas informações tendem a ficar dispersas e a gerar conflitos, como reservas simultâneas do mesmo espaço. O projeto propõe uma solução que centraliza esses dados em um banco de dados e aplica regras de negócio para evitar inconsistências.</p>
+        <p><strong>Abordagem:</strong> O sistema foi modelado segundo o paradigma de orientação a objetos e implementado em C++17, com persistência em SQLite e organização em camadas. As entidades do domínio são representadas por hierarquias de classes, e o acesso aos dados é isolado por padrões de projeto, o que facilita a manutenção e a evolução do código.</p>
+      </div>
+
+      <h3 style="color: var(--azul-900); margin-top: 28px;">Objetivos</h3>
+      <ul class="lista-objetivos">
+        <li>Aplicar, em um sistema de informação completo, os conceitos de classes, objetos, herança, polimorfismo, encapsulamento e modificadores de acesso.</li>
+        <li>Implementar operações de criação, leitura, atualização e remoção (CRUD) conectadas a um banco de dados relacional.</li>
+        <li>Representar regras de negócio reais do domínio condominial, como conflito de horários, capacidade das áreas e restrições de cancelamento.</li>
+        <li>Utilizar ponteiros, referências e padrões de projeto (Singleton, Repository e Factory) para estruturar o código.</li>
+        <li>Documentar o sistema por meio de diagramas, relatório e vídeo explicativo.</li>
+      </ul>
+    </section>
+
+    <section id="funcionalidades">
+      <h2>Funcionalidades</h2>
+      <p class="sub">Módulos com CRUD completo conectado ao banco de dados</p>
+      <div class="grade">
+        <div class="card">
+          <div class="num">01</div>
+          <h3>Apartamentos e moradores</h3>
+          <p>Cadastro, edição e remoção de apartamentos e moradores, com vínculo entre ambos.</p>
+        </div>
+        <div class="card">
+          <div class="num">02</div>
+          <h3>Áreas comuns e reservas</h3>
+          <p>Salão de festas, piscina e churrasqueira, com validação de horário, capacidade e conflito entre reservas.</p>
+        </div>
+        <div class="card">
+          <div class="num">03</div>
+          <h3>Visitantes e visitas</h3>
+          <p>Registro de entrada e saída de visitantes pelo porteiro, com preservação do histórico.</p>
+        </div>
+        <div class="card">
+          <div class="num">04</div>
+          <h3>Funcionários</h3>
+          <p>Cadastro e gerenciamento dos funcionários do condomínio e de seus cargos.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="arquitetura">
+      <h2>Arquitetura</h2>
+      <p class="sub">Organização em camadas</p>
+      <div class="tabela-wrap">
+        <table>
+          <tr><th>Camada</th><th>Responsabilidade</th></tr>
+          <tr><td>Interface</td><td>Menus de terminal e telas em Qt</td></tr>
+          <tr><td>Serviço</td><td>Regras de negócio e funções do usuário final</td></tr>
+          <tr><td>Repositório</td><td>Operações de CRUD, isolando o código SQL</td></tr>
+          <tr><td>Infraestrutura</td><td>Conexão com o banco, exceções e fábricas de objetos</td></tr>
+          <tr><td>Modelo</td><td>Entidades do domínio usadas por todas as camadas</td></tr>
+        </table>
+      </div>
+      <p style="margin-top: 20px;">Tecnologias utilizadas:</p>
+      <div class="chips">
+        <span class="chip">C++17</span>
+        <span class="chip">SQLite</span>
+        <span class="chip">Qt 6</span>
+        <span class="chip">CMake</span>
+        <span class="chip">Git e GitHub</span>
+      </div>
+    </section>
+
+    <section id="poo">
+      <h2>Conceitos de POO aplicados</h2>
+      <p class="sub">Onde cada conceito aparece no código</p>
+      <div class="tabela-wrap">
+        <table>
+          <tr><th>Conceito</th><th>Aplicação no projeto</th></tr>
+          <tr><td>Classes abstratas</td><td>Pessoa, AreaComum e a interface IRepositorio</td></tr>
+          <tr><td>Herança</td><td>Morador, Visitante e Funcionario herdam de Pessoa; SalaoFestas, Piscina e Churrasqueira herdam de AreaComum</td></tr>
+          <tr><td>Polimorfismo</td><td>Cada área comum calcula a taxa e valida reservas à sua maneira (virtual e override)</td></tr>
+          <tr><td>Encapsulamento</td><td>Atributos privados com getters e setters que validam os dados</td></tr>
+          <tr><td>Ponteiros e referências</td><td>unique_ptr em coleções polimórficas e passagem de parâmetros por const&amp;</td></tr>
+          <tr><td>Padrões de projeto</td><td>Singleton (Database), Repository (acesso a dados) e Factory (criação de objetos)</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <section id="equipe">
+      <h2>Equipe</h2>
+      <p class="sub">Integrantes do grupo</p>
+      <div class="grade">
+        <div class="card"><div class="avatar">VA</div><h3>Vivian Azevedo</h3></div>
+        <div class="card"><div class="avatar">CM</div><h3>Clécio Muniz</h3></div>
+        <div class="card"><div class="avatar">SF</div><h3>Sâmia Freitas</h3></div>
+        <div class="card"><div class="avatar">BL</div><h3>Beatriz Luna</h3></div>
+      </div>
+    </section>
+
+    
+    <section id="diagramas">
+      <h2>Diagramas</h2>
+      <p class="sub">Modelo de classes e modelo de dados</p>
+      <div class="imagens">
+        <img src="diagrama-classes.png" alt="Diagrama de classes">
+        <img src="diagrama-er.png" alt="Diagrama entidade-relacionamento">
+      </div>
+    </section>
+    
+
+    <!-- Descomente quando tiver os prints
+    <section id="telas">
+      <h2>Telas</h2>
+      <div class="imagens">
+        <img src="print-reservas.png" alt="Tela de reservas">
+      </div>
+    </section>
+    -->
+
+    <!-- Descomente quando o vídeo estiver publicado
+    <section id="video">
+      <h2>Vídeo</h2>
+      <p class="sub">Funcionamento do sistema e conceitos de POO utilizados</p>
+      <div class="video">
+        <iframe src="https://www.youtube.com/embed/ID_DO_VIDEO" allowfullscreen></iframe>
+      </div>
+    </section>
+    -->
+
+    <section id="links">
+      <h2>Links</h2>
+      <p class="sub">Código-fonte e documentação</p>
+      <div class="botoes" style="justify-content: flex-start;">
+        <a class="btn btn-principal" href="https://github.com/vivianazevedo/edoo-adm-condominio">Repositório no GitHub</a>
+        <!-- <a class="btn btn-secundario" href="relatorio.pdf">Relatório (PDF)</a> -->
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    Projeto Prático de CIN0135 · Estruturas de Dados Orientadas a Objetos · Centro de Informática, UFPE · 2026.2
+  </footer>
+
+</body>
+</html>
