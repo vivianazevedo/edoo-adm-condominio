@@ -1,0 +1,3138 @@
+diff --git a/include/infra/Database.h b/include/infra/Database.h
+index ac3578f..dd067bc 100644
+--- a/include/infra/Database.h
++++ b/include/infra/Database.h
+@@ -2,34 +2,43 @@
+ 
+ #include <string>
+ 
++// declaracao antecipada, assim nao precisa incluir o sqlite3.h aqui
+ struct sqlite3;
+ 
+-// Mantem a unica conexao SQLite usada pela aplicacao.
++// guarda a unica conexao com o sqlite que o sistema inteiro usa (padrao singleton)
++// final = ninguem pode herdar dessa classe
+ class Database final {
+ public:
+-    // A primeira chamada define o arquivo do banco e o schema da aplicacao.
++    // a primeira chamada abre o banco e le o schema, as outras so devolvem a mesma instancia
+     static Database& instancia(
+         const std::string& caminhoBanco = "condominio.db",
+         const std::string& caminhoSchema = "sql/schema.sql");
+ 
+-    // Devolve a conexao para as classes de repositorio, sem transferir sua posse.
++    // da a conexao pros repositorios usarem, quem fecha ela e a propria Database
+     sqlite3* conexao() const noexcept;
+ 
+-    // Executa um ou mais comandos SQL e lanca ErroBanco em caso de falha.
++    // roda um ou mais comandos sql, se der erro joga ErroBanco
+     void executar(const std::string& sql);
+ 
++    // copia e move desligados, assim nunca existem duas conexoes
+     Database(const Database&) = delete;
+     Database& operator=(const Database&) = delete;
+     Database(Database&&) = delete;
+     Database& operator=(Database&&) = delete;
+ 
+ private:
++    // construtor privado: so o instancia() consegue criar o objeto
+     Database(const std::string& caminhoBanco, const std::string& caminhoSchema);
++    // fecha a conexao quando o objeto e destruido
+     ~Database();
+ 
++    // abre o arquivo do banco (ou cria se nao existir)
+     void abrir(const std::string& caminhoBanco);
++    // cria as tabelas lendo o schema.sql, so se o banco estiver vazio
+     void inicializarSchema(const std::string& caminhoSchema);
++    // diz se o banco ja tem alguma tabela
+     bool possuiTabelas() const;
+ 
++    // ponteiro da conexao aberta (nullptr = nao tem conexao)
+     sqlite3* conexao_ = nullptr;
+ };
+diff --git a/include/infra/ErroCondominio.h b/include/infra/ErroCondominio.h
+index 76a86e9..f2821c4 100644
+--- a/include/infra/ErroCondominio.h
++++ b/include/infra/ErroCondominio.h
+@@ -3,10 +3,11 @@
+ #include <exception> 
+ 
+ 
+-class ErroCondominio : public std::exception { // classe herda publicamente da bibilioteca 
++class ErroCondominio : public std::exception { // classe base de todos os erros do sistema, herda de exception da biblioteca padrao 
+ 
+     private:
+ 
++        // o texto do erro
+         std::string mensagem_; 
+ 
+     public: 
+@@ -16,7 +17,7 @@ class ErroCondominio : public std::exception { // classe herda publicamente da b
+ 
+ };
+ 
+-class ErroValidacao : public ErroCondominio { // erro de CPF invalido
++class ErroValidacao : public ErroCondominio { // dado invalido (cpf errado, campo vazio, data fora do formato...)
+ 
+     public:
+         explicit ErroValidacao (const std::string& mensagem); //construtor 
+@@ -24,7 +25,7 @@ class ErroValidacao : public ErroCondominio { // erro de CPF invalido
+ };
+ 
+ 
+-class ErroRegraNegocio : public ErroCondominio { //regra de negocio invalidada
++class ErroRegraNegocio : public ErroCondominio { // uma regra de negocio foi quebrada (ex: reserva em horario ocupado)
+ 
+     public:
+         explicit ErroRegraNegocio (const std::string& mensagem); // construtor 
+@@ -32,6 +33,7 @@ class ErroRegraNegocio : public ErroCondominio { //regra de negocio invalidada
+ };
+ 
+ 
++// erro que vem do sqlite (falha ao abrir, preparar ou rodar um sql)
+ class ErroBanco : public ErroCondominio {
+ 
+     public:
+diff --git a/include/infra/FabricaAreaComum.h b/include/infra/FabricaAreaComum.h
+index d1d404f..97ae462 100644
+--- a/include/infra/FabricaAreaComum.h
++++ b/include/infra/FabricaAreaComum.h
+@@ -4,15 +4,15 @@
+ 
+ class AreaComum;
+ 
+-// Cria a subclasse correspondente a area_comum.tipo no SQLite.
++// cria SalaoFestas, Piscina ou Churrasqueira conforme o tipo salvo na tabela area_comum
+ class FabricaAreaComum final : public FabricaPorTipo<AreaComum> {
+ public:
+-    // Associa o construtor de SalaoFestas ao valor salvo no banco.
++    // liga o texto SalaoFestas a funcao que cria um SalaoFestas
+     void registrarSalaoFestas(Criador criador);
+ 
+-    // Associa o construtor de Piscina ao valor salvo no banco.
++    // liga o texto Piscina a funcao que cria uma Piscina
+     void registrarPiscina(Criador criador);
+ 
+-    // Associa o construtor de Churrasqueira ao valor salvo no banco.
++    // liga o texto Churrasqueira a funcao que cria uma Churrasqueira
+     void registrarChurrasqueira(Criador criador);
+ };
+diff --git a/include/infra/FabricaPessoa.h b/include/infra/FabricaPessoa.h
+index 6348c13..cc94e5a 100644
+--- a/include/infra/FabricaPessoa.h
++++ b/include/infra/FabricaPessoa.h
+@@ -4,15 +4,15 @@
+ 
+ class Pessoa;
+ 
+-// Cria Morador, Visitante ou Funcionario conforme pessoa.tipo no SQLite.
++// cria Morador, Visitante ou Funcionario conforme o tipo salvo na tabela pessoa
+ class FabricaPessoa final : public FabricaPorTipo<Pessoa> {
+ public:
+-    // Associa o construtor de Morador ao valor "morador" do banco.
++    // liga o texto morador a funcao que cria um Morador
+     void registrarMorador(Criador criador);
+ 
+-    // Associa o construtor de Visitante ao valor "visitante" do banco.
++    // liga o texto visitante a funcao que cria um Visitante
+     void registrarVisitante(Criador criador);
+ 
+-    // Associa o construtor de Funcionario ao valor "funcionario" do banco.
++    // liga o texto funcionario a funcao que cria um Funcionario
+     void registrarFuncionario(Criador criador);
+ };
+diff --git a/include/infra/FabricaPorTipo.h b/include/infra/FabricaPorTipo.h
+index 7d7f307..dc6bbe3 100644
+--- a/include/infra/FabricaPorTipo.h
++++ b/include/infra/FabricaPorTipo.h
+@@ -7,14 +7,15 @@
+ #include <unordered_map>
+ #include <utility>
+ 
+-// Seleciona um construtor registrado pelo discriminador salvo no banco.
+-// Base pode ser abstrata; a entidade concreta e construida pelo modulo dono.
++// fabrica generica: guarda uma funcao que cria cada tipo, escolhida pelo texto salvo no banco (padrao factory)
++// a classe Base pode ser abstrata (ex: Pessoa), quem cria o objeto de verdade e cada subclasse
+ template <typename Base>
+ class FabricaPorTipo {
+ public:
++    // o tipo Criador e uma funcao sem parametros que devolve um objeto novo (unique_ptr)
+     using Criador = std::function<std::unique_ptr<Base>()>;
+ 
+-    // Cria a subclasse correspondente ou rejeita um tipo desconhecido.
++    // procura o tipo no mapa e chama a funcao criadora, se o tipo nao existir joga erro
+     std::unique_ptr<Base> criar(const std::string& tipo) const {
+         const auto encontrado = criadores_.find(tipo);
+         if (encontrado == criadores_.end()) {
+@@ -28,7 +29,7 @@ public:
+     }
+ 
+ protected:
+-    // Registra um construtor para um dos tipos permitidos pela fabrica concreta.
++    // guarda a funcao criadora de um tipo (protected: so as fabricas filhas chamam), nao aceita tipo repetido
+     void registrar(const std::string& tipo, Criador criador) {
+         if (!criador) {
+             throw std::invalid_argument("Criador vazio: " + tipo);
+@@ -40,5 +41,6 @@ protected:
+     }
+ 
+ private:
++    // mapa: texto do tipo -> funcao que cria ele
+     std::unordered_map<std::string, Criador> criadores_;
+ };
+diff --git a/include/interface/MenuMoradores.h b/include/interface/MenuMoradores.h
+index 069193d..e302602 100644
+--- a/include/interface/MenuMoradores.h
++++ b/include/interface/MenuMoradores.h
+@@ -37,6 +37,7 @@ private:
+     void removerFuncionario();
+ 
+ public:
++    // recebe os services por referencia (o menu nao cria nada, so usa)
+     MenuMoradores(ApartamentoService& apartamentoService,
+                   MoradorService& moradorService,
+                   FuncionarioService& funcionarioService);
+diff --git a/include/interface/MenuPrincipal.h b/include/interface/MenuPrincipal.h
+index a950d95..50467bf 100644
+--- a/include/interface/MenuPrincipal.h
++++ b/include/interface/MenuPrincipal.h
+@@ -5,7 +5,9 @@
+ #include <QTabWidget>
+ #include <QWidget>
+ 
++// janela principal da interface grafica (qt): so tem as abas, cada aba e uma tela
+ class MenuPrincipal : public QMainWindow {
++    // macro do qt, necessaria pra usar signals e slots
+     Q_OBJECT
+ 
+ public:
+@@ -13,6 +15,7 @@ public:
+     ~MenuPrincipal();
+ 
+ private:
++    // o widget que guarda as abas
+     QTabWidget *abas;
+ };
+ 
+diff --git a/include/interface/MenuReservas.h b/include/interface/MenuReservas.h
+index 2e92d86..ec61568 100644
+--- a/include/interface/MenuReservas.h
++++ b/include/interface/MenuReservas.h
+@@ -3,11 +3,15 @@
+ #include "servico/AreaComumService.h"
+ #include "servico/ReservaService.h"
+ 
++// menu de terminal de areas comuns e reservas
++// so le o que a pessoa digita e chama os services
+ class MenuReservas {
+ private:
++    // os services ficam guardados dentro do menu
+     AreaComumService areaService_;
+     ReservaService reservaService_;
+ 
++    // uma funcao pra cada opcao do menu
+     void listarAreas();
+     void cadastrarArea();
+     void criarReserva();
+@@ -15,5 +19,6 @@ private:
+     void cancelarReserva();
+ 
+ public:
++    // mostra o menu ate a pessoa escolher 0 (voltar)
+     void exibirMenu();
+ };
+\ No newline at end of file
+diff --git a/include/interface/MenuVisitas.h b/include/interface/MenuVisitas.h
+index e4e6fc8..04178e6 100644
+--- a/include/interface/MenuVisitas.h
++++ b/include/interface/MenuVisitas.h
+@@ -7,6 +7,7 @@ class MenuVisitas {
+ private:
+     VisitaService& visitaService_;
+ 
++    // uma funcao pra cada opcao do menu
+     void cadastrarVisitante();
+     void registrarEntrada();
+     void registrarSaida();
+@@ -14,6 +15,7 @@ private:
+     void historicoPorApartamento();
+ 
+ public:
++    // recebe o service por referencia (o menu nao cria nada, so usa)
+     explicit MenuVisitas(VisitaService& visitaService);
+ 
+     // mostra o menu ate a pessoa escolher voltar
+diff --git a/include/interface/TelaMoradores.h b/include/interface/TelaMoradores.h
+index a912748..947d9ae 100644
+--- a/include/interface/TelaMoradores.h
++++ b/include/interface/TelaMoradores.h
+@@ -12,20 +12,24 @@
+ #include <QTableWidget>
+ #include <QWidget>
+ 
+-// CRUD de apartamentos e moradores, sempre por meio dos servicos.
++// aba de apartamentos e moradores (qt): formularios, botoes e tabelas
++// nunca mexe no sql, so chama os services
+ class TelaMoradores : public QWidget {
+     Q_OBJECT
+ 
+ public:
+     explicit TelaMoradores(QWidget* parent = nullptr);
++    // recarrega as tabelas e as listas com o que esta no banco
+     void atualizar();
+ 
+ private:
++    // repositorios e services da tela (o service recebe o repositorio por referencia)
+     RepositorioApartamento repoApartamentos_;
+     RepositorioPessoa repoPessoas_;
+     ApartamentoService apartamentos_;
+     MoradorService moradores_;
+ 
++    // campos dos formularios e tabelas, sao ponteiros e quem apaga eles e o qt
+     QLineEdit* bloco_ = nullptr;
+     QLineEdit* numero_ = nullptr;
+     QSpinBox* andar_ = nullptr;
+diff --git a/include/interface/TelaReservas.h b/include/interface/TelaReservas.h
+index d779012..84a0db7 100644
+--- a/include/interface/TelaReservas.h
++++ b/include/interface/TelaReservas.h
+@@ -17,21 +17,25 @@
+ 
+ #include <memory>
+ 
+-// Cadastro de areas e operacoes de reserva conectadas ao SQLite.
++// aba de areas comuns e reservas (qt): cadastra areas e cria, consulta e cancela reservas
++// nunca mexe no sql, so chama os services
+ class TelaReservas : public QWidget {
+     Q_OBJECT
+ 
+ public:
+     explicit TelaReservas(QWidget* parent = nullptr);
++    // recarrega as tabelas e as listas com o que esta no banco
+     void atualizar();
+ 
+ private:
++    // os services de areas e reservas recebem shared_ptr, por isso esses dois repositorios sao shared_ptr
+     std::shared_ptr<RepositorioAreaComum> repoAreas_;
+     std::shared_ptr<RepositorioReserva> repoReservas_;
+     RepositorioPessoa repoPessoas_;
+     AreaComumService areas_;
+     ReservaService reservas_;
+ 
++    // campos dos formularios e tabelas, sao ponteiros e quem apaga eles e o qt
+     QComboBox* tipo_ = nullptr;
+     QLineEdit* nomeArea_ = nullptr;
+     QSpinBox* capacidade_ = nullptr;
+diff --git a/include/interface/TelaVisitas.h b/include/interface/TelaVisitas.h
+index 70c282b..e44200e 100644
+--- a/include/interface/TelaVisitas.h
++++ b/include/interface/TelaVisitas.h
+@@ -12,23 +12,28 @@
+ #include <QTableWidget>
+ #include <QWidget>
+ 
+-// Cadastro de funcionarios/visitantes e controle de entrada e saida.
++// aba da portaria (qt): cadastra funcionarios e visitantes e controla entrada e saida das visitas
++// nunca mexe no sql, so chama os services
+ class TelaVisitas : public QWidget {
+     Q_OBJECT
+ 
+ public:
+     explicit TelaVisitas(QWidget* parent = nullptr);
++    // recarrega tudo com o que esta no banco
+     void atualizar();
+ 
+ private:
++    // recarrega so a tabela de visitas (respeitando o filtro de apartamento)
+     void atualizarVisitas();
+ 
++    // repositorios e services da tela (o service recebe o repositorio por referencia)
+     RepositorioPessoa repoPessoas_;
+     RepositorioVisita repoVisitas_;
+     RepositorioApartamento repoApartamentos_;
+     FuncionarioService funcionarios_;
+     VisitaService visitas_;
+ 
++    // campos dos formularios e tabelas, sao ponteiros e quem apaga eles e o qt
+     QLineEdit* nomeFuncionario_ = nullptr;
+     QLineEdit* cpfFuncionario_ = nullptr;
+     QLineEdit* telefoneFuncionario_ = nullptr;
+diff --git a/include/interface/UtilQt.h b/include/interface/UtilQt.h
+index e8d7115..104a0ad 100644
+--- a/include/interface/UtilQt.h
++++ b/include/interface/UtilQt.h
+@@ -1,5 +1,6 @@
+ #pragma once
+ 
++// funcoes de ajuda que todas as telas qt usam
+ #include "infra/ErroCondominio.h"
+ 
+ #include <QMessageBox>
+@@ -9,6 +10,8 @@
+ #include <exception>
+ #include <functional>
+ 
++// devolve o id (coluna 0) da linha selecionada na tabela, se nao tiver linha joga ErroValidacao
++// inline pra poder ficar no .h sem dar erro de definicao repetida
+ inline int idSelecionado(QTableWidget* tabela) {
+     const int linha = tabela->currentRow();
+     if (linha < 0 || tabela->item(linha, 0) == nullptr) {
+@@ -17,6 +20,8 @@ inline int idSelecionado(QTableWidget* tabela) {
+     return tabela->item(linha, 0)->text().toInt();
+ }
+ 
++// roda a acao e transforma cada tipo de erro numa janela de mensagem (aviso ou erro)
++// assim o programa nao fecha quando um service joga excecao
+ inline void executarNaTela(QWidget* tela, const std::function<void()>& acao) {
+     try {
+         acao();
+diff --git a/include/modelo/Apartamento.h b/include/modelo/Apartamento.h
+index bebd833..dc98bfb 100644
+--- a/include/modelo/Apartamento.h
++++ b/include/modelo/Apartamento.h
+@@ -4,8 +4,9 @@
+ 
+ 
+ 
+-class Morador;// declara morador 
++class Morador;// avisa que Morador existe (basta isso porque so guardamos ponteiros)
+ 
++// apartamento do condominio, guarda ponteiros dos moradores que moram nele
+ class Apartamento {
+ 
+     private:
+@@ -18,6 +19,7 @@ class Apartamento {
+     public:
+         Apartamento(const std::string& bloco, const std::string& numero, int andar, int id = 0); // id 0 quer dizer que ainda nao foi salvo no banco
+ 
++        // getters e setters (os setters de bloco, numero e andar validam)
+         int getId() const;
+         const std::string& getBloco() const;
+         const std::string& getNumero() const;
+diff --git a/include/modelo/AreaComum.h b/include/modelo/AreaComum.h
+index d093df0..9efde6d 100644
+--- a/include/modelo/AreaComum.h
++++ b/include/modelo/AreaComum.h
+@@ -2,12 +2,17 @@
+ 
+ #include <string>
+ 
++// classe base abstrata das areas comuns (salao, piscina e churrasqueira)
++// nao da pra criar objeto dela direto, cada subclasse define sua taxa e suas regras de reserva
+ class AreaComum {
+ public:
++    // recusa dados invalidos na criacao (capacidade maior que zero, taxa nao negativa, abertura antes do fechamento)
+     AreaComum(int id, std::string nome, int capacidade, double taxaBase,
+               std::string horaAbertura, std::string horaFechamento);
++    // destrutor virtual pra apagar certo pelo ponteiro da classe base
+     virtual ~AreaComum() = default;
+ 
++    // getters
+     int getId() const noexcept { return id_; }
+     const std::string& getNome() const noexcept { return nome_; }
+     int getCapacidade() const noexcept { return capacidade_; }
+@@ -15,12 +20,18 @@ public:
+     const std::string& getHoraAbertura() const noexcept { return horaAbertura_; }
+     const std::string& getHoraFechamento() const noexcept { return horaFechamento_; }
+ 
++    // metodos virtuais puros: cada subclasse e obrigada a escrever os seus (polimorfismo)
++    // texto do tipo, o mesmo que fica salvo no banco
+     virtual std::string getTipo() const = 0;
++    // calcula o valor da reserva (cada area cobra de um jeito)
+     virtual double calcularTaxa(int convidados) const = 0;
++    // diz se a reserva respeita as regras da area (capacidade, horario e duracao)
+     virtual bool validarReserva(int convidados, const std::string& inicio,
+                                 const std::string& fim) const = 0;
+ 
+ protected:
++    // parte comum das regras: convidados cabem, horario dentro do funcionamento e duracao maxima em minutos
++    // as subclasses reaproveitam esse metodo
+     bool validarPeriodo(int convidados, const std::string& inicio,
+                         const std::string& fim, int duracaoMaximaMinutos) const;
+ 
+diff --git a/include/modelo/Churrasqueira.h b/include/modelo/Churrasqueira.h
+index 96c58cb..d579d4f 100644
+--- a/include/modelo/Churrasqueira.h
++++ b/include/modelo/Churrasqueira.h
+@@ -2,9 +2,12 @@
+ 
+ #include "modelo/AreaComum.h"
+ 
++// area do tipo churrasqueira (final = ninguem herda dela)
+ class Churrasqueira final : public AreaComum {
+ public:
++    // aproveita o construtor da classe base
+     using AreaComum::AreaComum;
++    // os tres metodos abaixo reescrevem os virtuais puros da AreaComum (override)
+     std::string getTipo() const override;
+     double calcularTaxa(int convidados) const override;
+     bool validarReserva(int convidados, const std::string& inicio,
+diff --git a/include/modelo/Funcionario.h b/include/modelo/Funcionario.h
+index 08abc94..30d326a 100644
+--- a/include/modelo/Funcionario.h
++++ b/include/modelo/Funcionario.h
+@@ -4,9 +4,10 @@
+ 
+ 
+ 
+-enum class Cargo { Porteiro, Zelador, Faxineiro, Administrador }; //cargo do funcionario 
++enum class Cargo { Porteiro, Zelador, Faxineiro, Administrador }; // cargos possiveis
+ 
+ 
++// funcionario do condominio, herda de Pessoa (o cargo e um atributo, so o Porteiro registra visitas)
+ class Funcionario : public Pessoa {
+ 
+ 
+@@ -24,9 +25,10 @@ class Funcionario : public Pessoa {
+         const std::string& turno() const { return turno_; }
+         const std::string& dataAdmissao() const { return dataAdmissao_; }
+ 
+-        bool ehPorteiro() const { return cargo_ == Cargo::Porteiro; }// retorna true s for porteiro 
++        bool ehPorteiro() const { return cargo_ == Cargo::Porteiro; }// true se o cargo for porteiro
+ 
+         void setCargo(Cargo cargo) { cargo_ = cargo; }
++        // turno e data passam pelas validacoes da Pessoa
+         void setTurno(const std::string& turno);
+         void setDataAdmissao(const std::string& dataAdmissao);
+ 
+diff --git a/include/modelo/Morador.h b/include/modelo/Morador.h
+index 3726147..03c1a8d 100644
+--- a/include/modelo/Morador.h
++++ b/include/modelo/Morador.h
+@@ -6,6 +6,7 @@
+ 
+ enum class TipoOcupacao { Proprietario, Inquilino, Dependente}; //forma de ocupacao
+ 
++// morador do condominio, herda de Pessoa e fica ligado a um apartamento pelo id
+ class Morador : public Pessoa {
+ 
+     private:
+diff --git a/include/modelo/Pessoa.h b/include/modelo/Pessoa.h
+index f43d059..41f6cfa 100644
+--- a/include/modelo/Pessoa.h
++++ b/include/modelo/Pessoa.h
+@@ -3,6 +3,8 @@
+ #include "infra/ErroCondominio.h"
+ 
+ 
++// classe base abstrata de Morador, Visitante e Funcionario
++// guarda os dados que todo mundo tem: id, nome, cpf e telefone
+ class Pessoa {
+ 
+     private:
+@@ -13,23 +15,30 @@ class Pessoa {
+ 
+     protected:
+         static std::string textoObrigatorio(const std::string& valor, const std::string& campo); // remove espacos das pontas e recusa texto sem nada 
+-        static std::string dataIsoValida(const std::string& data, const std::string& campo); // confere data (morador e funcionario usam por isso deixo em pessoa)
++        static std::string dataIsoValida(const std::string& data, const std::string& campo); // confere o formato AAAA-MM-DD e se a data existe de verdade, fica aqui porque morador e funcionario usam
+        
+     public:
++        // o construtor passa tudo pelos setters, assim ja valida na criacao
+         Pessoa (std::string nome, std::string cpf, std::string telefone, int id = 0);
++        // destrutor virtual pra apagar certo pelo ponteiro da classe base
+         virtual ~Pessoa() = default; 
+ 
++        // virtual puro: cada subclasse diz se e morador, visitante ou funcionario (polimorfismo)
+         virtual std::string tipo () const = 0;
+ 
++        // getters
+         int id() const { return id_; }
+         const std::string& nome() const { return nome_; }
+         const std::string& cpf() const { return cpf_; }
+         const std::string& telefone() const { return telefone_; }
+ 
++        // tira tudo que nao for numero do cpf
+         static std::string normalizarCpf(const std::string& cpf);
++        // confere o tamanho e os digitos verificadores do cpf
+         static bool cpfValido(const std::string& cpf);
+ 
+-        void setId(int id); // lanca errovalidacao se o valor for invalaido
++        void setId(int id); // joga ErroValidacao se o valor for invalido (id negativo)
++        // os outros setters tambem validam e jogam ErroValidacao se estiver errado
+         void setNome(const std::string& nome);
+         void setCpf(const std::string& cpf);
+         void setTelefone(const std::string& telefone);
+diff --git a/include/modelo/Piscina.h b/include/modelo/Piscina.h
+index f3ec823..1562f82 100644
+--- a/include/modelo/Piscina.h
++++ b/include/modelo/Piscina.h
+@@ -2,9 +2,12 @@
+ 
+ #include "modelo/AreaComum.h"
+ 
++// area do tipo piscina (final = ninguem herda dela)
+ class Piscina final : public AreaComum {
+ public:
++    // aproveita o construtor da classe base
+     using AreaComum::AreaComum;
++    // os tres metodos abaixo reescrevem os virtuais puros da AreaComum (override)
+     std::string getTipo() const override;
+     double calcularTaxa(int convidados) const override;
+     bool validarReserva(int convidados, const std::string& inicio,
+diff --git a/include/modelo/Reserva.h b/include/modelo/Reserva.h
+index c3939f0..cdf8879 100644
+--- a/include/modelo/Reserva.h
++++ b/include/modelo/Reserva.h
+@@ -2,14 +2,19 @@
+ 
+ #include <string>
+ 
++// situacao da reserva: ATIVA ocupa o horario, CANCELADA libera ele
+ enum class StatusReserva { ATIVA, CANCELADA };
+ 
++// reserva de uma area comum feita por um morador
++// guarda so os ids, quem junta tudo e o ReservaService
+ class Reserva {
+ public:
++    // valida os dados na criacao (data, horario, ids e valor) e joga ErroValidacao se estiver errado
+     Reserva(int id, int moradorId, int areaId, std::string data,
+             std::string horaInicio, std::string horaFim, int numConvidados,
+             StatusReserva status, double valor);
+ 
++    // getters
+     int getId() const noexcept { return id_; }
+     int getMoradorId() const noexcept { return moradorId_; }
+     int getAreaId() const noexcept { return areaId_; }
+@@ -20,6 +25,7 @@ public:
+     StatusReserva getStatus() const noexcept { return status_; }
+     double getValor() const noexcept { return valor_; }
+ 
++    // unico setter: serve pra cancelar a reserva
+     void setStatus(StatusReserva status) noexcept { status_ = status; }
+ 
+ private:
+diff --git a/include/modelo/SalaoFestas.h b/include/modelo/SalaoFestas.h
+index 70417bb..76cf954 100644
+--- a/include/modelo/SalaoFestas.h
++++ b/include/modelo/SalaoFestas.h
+@@ -2,9 +2,12 @@
+ 
+ #include "modelo/AreaComum.h"
+ 
++// area do tipo salao de festas (final = ninguem herda dela)
+ class SalaoFestas final : public AreaComum {
+ public:
++    // aproveita o construtor da classe base
+     using AreaComum::AreaComum;
++    // os tres metodos abaixo reescrevem os virtuais puros da AreaComum (override)
+     std::string getTipo() const override;
+     double calcularTaxa(int convidados) const override;
+     bool validarReserva(int convidados, const std::string& inicio,
+diff --git a/include/modelo/Visitante.h b/include/modelo/Visitante.h
+index 36f8c28..4cc27eb 100644
+--- a/include/modelo/Visitante.h
++++ b/include/modelo/Visitante.h
+@@ -4,6 +4,7 @@
+ 
+ 
+ 
++// visitante do condominio, herda de Pessoa e nao tem tabela propria no banco
+ class Visitante : public Pessoa {
+ public:
+     Visitante(std::string nome, std::string cpf, std::string telefone, int id = 0); // construtor 
+diff --git a/include/repositorio/IRepositorio.h b/include/repositorio/IRepositorio.h
+index e914526..b1f1498 100644
+--- a/include/repositorio/IRepositorio.h
++++ b/include/repositorio/IRepositorio.h
+@@ -3,24 +3,26 @@
+ #include <memory>
+ #include <vector>
+ 
+-// Contrato de persistencia usado pelos repositorios de cada entidade.
++// interface generica do CRUD, cada repositorio implementa pra sua entidade T (padrao repository)
++// e uma classe abstrata: todos os metodos sao virtuais puros
+ template <typename T>
+ class IRepositorio {
+ public:
++    // destrutor virtual
+     virtual ~IRepositorio() = default;
+ 
+-    // Insere a entidade e devolve seu identificador no banco.
++    // create: salva no banco e devolve o id gerado
+     virtual int inserir(const T& entidade) = 0;
+ 
+-    // Busca uma entidade pelo identificador; devolve nullptr se nao existir.
++    // read: busca pelo id, devolve nullptr se nao achar
+     virtual std::unique_ptr<T> buscarPorId(int id) = 0;
+ 
+-    // Devolve todas as entidades, preservando o tipo concreto das subclasses.
++    // read: devolve todas, em unique_ptr pra guardar o tipo real (Morador, Piscina...)
+     virtual std::vector<std::unique_ptr<T>> listar() = 0;
+ 
+-    // Atualiza uma entidade existente; devolve false se nao existir.
++    // update: atualiza pelo id, devolve false se o id nao existe
+     virtual bool atualizar(const T& entidade) = 0;
+ 
+-    // Remove pelo identificador; devolve false se nao existir.
++    // delete: remove pelo id, devolve false se o id nao existe
+     virtual bool remover(int id) = 0;
+ };
+diff --git a/include/repositorio/IRepositorioAreaComum.h b/include/repositorio/IRepositorioAreaComum.h
+index a7f74f4..a63260c 100644
+--- a/include/repositorio/IRepositorioAreaComum.h
++++ b/include/repositorio/IRepositorioAreaComum.h
+@@ -5,6 +5,7 @@
+ 
+ class AreaComum;
+ 
++// repositorio de areas comuns: so define que o T do IRepositorio e AreaComum
+ class IRepositorioAreaComum : public IRepositorio<AreaComum> {
+ public:
+     virtual ~IRepositorioAreaComum() = default;
+diff --git a/include/repositorio/IRepositorioReserva.h b/include/repositorio/IRepositorioReserva.h
+index 790eeea..b48681f 100644
+--- a/include/repositorio/IRepositorioReserva.h
++++ b/include/repositorio/IRepositorioReserva.h
+@@ -6,10 +6,13 @@
+ #include <string>
+ #include <vector>
+ 
++// repositorio de reservas: alem do CRUD, tem as duas buscas que o ReservaService precisa
+ class IRepositorioReserva : public IRepositorio<Reserva> {
+ public:
+     ~IRepositorioReserva() override = default;
++    // todas as reservas de um morador
+     virtual std::vector<std::unique_ptr<Reserva>> buscarPorMorador(int moradorId) = 0;
++    // reservas de uma area em um dia (usado pra ver conflito de horario)
+     virtual std::vector<std::unique_ptr<Reserva>> buscarPorAreaEData(
+         int areaId, const std::string& data) = 0;
+ };
+diff --git a/include/repositorio/RepositorioApartamento.h b/include/repositorio/RepositorioApartamento.h
+index 27f92fe..ef3f409 100644
+--- a/include/repositorio/RepositorioApartamento.h
++++ b/include/repositorio/RepositorioApartamento.h
+@@ -9,6 +9,7 @@
+ // nao carrega os moradores, quem liga eles ao apartamento e o service
+ class RepositorioApartamento : public IRepositorio<Apartamento> {
+ public:
++    // os cinco metodos do CRUD da IRepositorio, escritos com sql no .cpp
+     int inserir(const Apartamento& apartamento) override;
+     std::unique_ptr<Apartamento> buscarPorId(int id) override;
+     std::vector<std::unique_ptr<Apartamento>> listar() override;
+diff --git a/include/repositorio/RepositorioAreaComum.h b/include/repositorio/RepositorioAreaComum.h
+index c53f871..656050f 100644
+--- a/include/repositorio/RepositorioAreaComum.h
++++ b/include/repositorio/RepositorioAreaComum.h
+@@ -6,8 +6,11 @@
+ #include "modelo/AreaComum.h"
+ #include "infra/Database.h"
+ 
++// guarda e le areas comuns no sqlite
++// na leitura usa a FabricaAreaComum pra criar a subclasse certa (SalaoFestas, Piscina ou Churrasqueira)
+ class RepositorioAreaComum : public IRepositorioAreaComum {
+ public:
++    // os cinco metodos do CRUD da IRepositorio, escritos com sql no .cpp
+     int inserir(const AreaComum& entidade) override;
+     std::unique_ptr<AreaComum> buscarPorId(int id) override;
+     std::vector<std::unique_ptr<AreaComum>> listar() override;
+diff --git a/include/repositorio/RepositorioPessoa.h b/include/repositorio/RepositorioPessoa.h
+index a391780..6760682 100644
+--- a/include/repositorio/RepositorioPessoa.h
++++ b/include/repositorio/RepositorioPessoa.h
+@@ -10,6 +10,7 @@
+ // morador -> tabela morador, funcionario -> tabela funcionario, visitante so usa pessoa
+ class RepositorioPessoa : public IRepositorio<Pessoa> {
+ public:
++    // os cinco metodos do CRUD da IRepositorio, escritos com sql no .cpp
+     int inserir(const Pessoa& pessoa) override;
+     std::unique_ptr<Pessoa> buscarPorId(int id) override;
+     std::vector<std::unique_ptr<Pessoa>> listar() override;
+diff --git a/include/repositorio/RepositorioReserva.h b/include/repositorio/RepositorioReserva.h
+index 95e65a3..673676e 100644
+--- a/include/repositorio/RepositorioReserva.h
++++ b/include/repositorio/RepositorioReserva.h
+@@ -2,13 +2,16 @@
+ 
+ #include "repositorio/IRepositorioReserva.h"
+ 
++// guarda e le reservas no sqlite (final = ninguem herda dela)
+ class RepositorioReserva final : public IRepositorioReserva {
+ public:
++    // os cinco metodos do CRUD da IRepositorio, escritos com sql no .cpp
+     int inserir(const Reserva& entidade) override;
+     std::unique_ptr<Reserva> buscarPorId(int id) override;
+     std::vector<std::unique_ptr<Reserva>> listar() override;
+     bool atualizar(const Reserva& entidade) override;
+     bool remover(int id) override;
++    // as duas buscas extras da IRepositorioReserva
+     std::vector<std::unique_ptr<Reserva>> buscarPorMorador(int moradorId) override;
+     std::vector<std::unique_ptr<Reserva>> buscarPorAreaEData(
+         int areaId, const std::string& data) override;
+diff --git a/include/repositorio/RepositorioVisita.h b/include/repositorio/RepositorioVisita.h
+index 2eded2e..6cb560f 100644
+--- a/include/repositorio/RepositorioVisita.h
++++ b/include/repositorio/RepositorioVisita.h
+@@ -10,6 +10,7 @@
+ // isso e regra de negocio e fica no service (o banco so garante que os ids existem)
+ class RepositorioVisita : public IRepositorio<Visita> {
+ public:
++    // os cinco metodos do CRUD da IRepositorio, escritos com sql no .cpp
+     int inserir(const Visita& visita) override;
+     std::unique_ptr<Visita> buscarPorId(int id) override;
+     std::vector<std::unique_ptr<Visita>> listar() override;
+diff --git a/include/servico/ApartamentoService.h b/include/servico/ApartamentoService.h
+index d703a36..ae01317 100644
+--- a/include/servico/ApartamentoService.h
++++ b/include/servico/ApartamentoService.h
+@@ -6,9 +6,12 @@
+ #include "repositorio/IRepositorio.h"
+ 
+ 
++// regras de negocio dos apartamentos: nao deixa cadastrar bloco e numero repetidos
++// a tela e o menu so conversam com essa classe, nunca com o sql
+ class ApartamentoService {
+ 
+     private:
++        // referencia pro repositorio (a interface), assim da pra trocar a implementacao
+         IRepositorio<Apartamento>& repo_;
+         
+     public:
+diff --git a/include/servico/AreaComumService.h b/include/servico/AreaComumService.h
+index 3804604..6597642 100644
+--- a/include/servico/AreaComumService.h
++++ b/include/servico/AreaComumService.h
+@@ -7,18 +7,24 @@
+ #include <string>
+ #include <vector>
+ 
++// regras de negocio das areas comuns: cadastrar, listar, editar e remover
+ class AreaComumService {
+ public:
++    // o construtor padrao usa o repositorio real, o outro recebe um (bom pra testes)
+     AreaComumService();
+     explicit AreaComumService(std::shared_ptr<IRepositorioAreaComum> repo);
+ 
++    // cria a subclasse certa pelo texto do tipo (SalaoFestas, Piscina ou Churrasqueira)
+     int cadastrar(const std::string& tipo, const std::string& nome, int capacidade,
+                   double taxaBase, const std::string& abertura,
+                   const std::string& fechamento);
+     std::vector<std::unique_ptr<AreaComum>> listar();
++    // so muda nome, capacidade e taxa, o tipo e os horarios continuam os mesmos
+     bool editar(int id, const std::string& nome, int capacidade, double taxaBase);
++    // devolve false se o id nao existe, joga ErroRegraNegocio se a area tem reservas
+     bool remover(int id);
+ 
+ private:
++    // repositorio guardado em shared_ptr
+     std::shared_ptr<IRepositorioAreaComum> repo_;
+ };
+diff --git a/include/servico/FuncionarioService.h b/include/servico/FuncionarioService.h
+index d0a9d9d..e1f76fa 100644
+--- a/include/servico/FuncionarioService.h
++++ b/include/servico/FuncionarioService.h
+@@ -7,9 +7,11 @@
+ #include "repositorio/IRepositorio.h"
+ 
+ 
++// regras de negocio dos funcionarios (o cpf nao pode repetir em nenhuma pessoa)
+ class FuncionarioService {
+ 
+     private:
++        // funcionario e guardado como Pessoa, no repositorio de pessoas
+         IRepositorio<Pessoa>& repoPessoa_;
+ 
+     public:
+diff --git a/include/servico/MoradorService.h b/include/servico/MoradorService.h
+index 242b820..530e712 100644
+--- a/include/servico/MoradorService.h
++++ b/include/servico/MoradorService.h
+@@ -8,9 +8,11 @@
+ #include "repositorio/IRepositorio.h"
+ 
+ 
++// regras de negocio dos moradores: o apartamento tem que existir e o cpf nao pode repetir
+ class MoradorService {
+ 
+     private:
++        // morador e guardado como Pessoa, no repositorio de pessoas
+         IRepositorio<Pessoa>& repoPessoa_;
+         IRepositorio<Apartamento>& repoApto_;
+         
+diff --git a/include/servico/ReservaService.h b/include/servico/ReservaService.h
+index d00c915..ab47ee6 100644
+--- a/include/servico/ReservaService.h
++++ b/include/servico/ReservaService.h
+@@ -11,26 +11,35 @@
+ #include "repositorio/IRepositorioAreaComum.h"
+ #include "modelo/Reserva.h"
+ 
++// regras das reservas: criar (conflito, capacidade, horario e valor), cancelar (24 horas) e consultar
++// quem decide se pode ou nao reservar e essa classe
+ class ReservaService {
+ private:
++    // repositorios guardados em shared_ptr
+     std::shared_ptr<IRepositorioReserva> repoReserva_;
+     std::shared_ptr<IRepositorioAreaComum> repoArea_;
++    // funcao que devolve a hora de agora (nos testes da pra trocar por um horario fixo)
+     std::function<std::chrono::system_clock::time_point()> agora_;
+ 
+ public:
++    // o construtor padrao usa os repositorios reais, o outro recebe os repositorios e o relogio (testes)
+     ReservaService();
+     ReservaService(std::shared_ptr<IRepositorioReserva> repoReserva,
+                    std::shared_ptr<IRepositorioAreaComum> repoArea,
+                    std::function<std::chrono::system_clock::time_point()> agora =
+                        std::chrono::system_clock::now);
+ 
++    // cria a reserva e devolve o id, joga ErroRegraNegocio se nao puder (RN01 a RN03 ou data que ja passou)
+     int criar(int moradorId, int areaId, const std::string& data, 
+               const std::string& horaInicio, const std::string& horaFim, int convidados);
+ 
++    // cancela se faltarem 24 horas ou mais (RN04), devolve false se o id nao existe
+     bool cancelar(int reservaId);
+ 
++    // reservas de um morador
+     std::vector<Reserva> listarPorMorador(int moradorId);
+ 
++    // reservas de uma area em um dia
+     std::vector<Reserva> listarPorArea(int areaId, const std::string& data);
+ };
+ 
+diff --git a/include/servico/VisitaService.h b/include/servico/VisitaService.h
+index 46ac655..1498d34 100644
+--- a/include/servico/VisitaService.h
++++ b/include/servico/VisitaService.h
+@@ -7,11 +7,13 @@
+ #include "repositorio/IRepositorio.h"
+ 
+ 
+-class Visita; //declara classe visita 
++class Visita; //declara a classe visita (o include de cima ja traz ela tambem)
+ 
++// regras da portaria: cadastrar visitante, registrar entrada (so porteiro) e saida, e consultar o historico
+ class VisitaService {
+ 
+     private:
++        // usa o repositorio de pessoas (visitante e porteiro) e o de visitas
+         IRepositorio<Pessoa>& repoPessoa_;
+         IRepositorio<Visita>& repoVisita_;
+         
+diff --git a/src/infra/Database.cpp b/src/infra/Database.cpp
+index a52b54a..5854b4e 100644
+--- a/src/infra/Database.cpp
++++ b/src/infra/Database.cpp
+@@ -8,6 +8,7 @@
+ 
+ namespace {
+ 
++// le o arquivo inteiro e devolve como texto (usado pra ler o schema.sql)
+ std::string lerArquivo(const std::string& caminho) {
+     std::ifstream arquivo(caminho);
+     if (!arquivo) throw ErroBanco("Nao foi possivel abrir o schema: " + caminho);
+@@ -18,12 +19,14 @@ std::string lerArquivo(const std::string& caminho) {
+ 
+ }  // namespace
+ 
++// o static dentro da funcao so e criado na primeira chamada, depois e sempre o mesmo objeto
+ Database& Database::instancia(const std::string& caminhoBanco,
+                               const std::string& caminhoSchema) {
+     static Database unicaInstancia(caminhoBanco, caminhoSchema);
+     return unicaInstancia;
+ }
+ 
++// abre o banco, liga as chaves estrangeiras e cria as tabelas se precisar
+ Database::Database(const std::string& caminhoBanco,
+                    const std::string& caminhoSchema) {
+     abrir(caminhoBanco);
+@@ -31,18 +34,23 @@ Database::Database(const std::string& caminhoBanco,
+         executar("PRAGMA foreign_keys = ON;");
+         inicializarSchema(caminhoSchema);
+     } catch (...) {
++        // se deu erro no meio, fecha a conexao antes de repassar o erro
++        // (se o construtor falha o destrutor nao roda, por isso fecha aqui)
+         sqlite3_close(conexao_);
+         conexao_ = nullptr;
+         throw;
+     }
+ }
+ 
++// fecha a conexao quando o programa termina
+ Database::~Database() {
+     if (conexao_ != nullptr) sqlite3_close(conexao_);
+ }
+ 
++// so devolve o ponteiro da conexao
+ sqlite3* Database::conexao() const noexcept { return conexao_; }
+ 
++// abre ou cria o arquivo do banco, se falhar joga ErroBanco com a mensagem do sqlite
+ void Database::abrir(const std::string& caminhoBanco) {
+     const int resultado = sqlite3_open(caminhoBanco.c_str(), &conexao_);
+     if (resultado == SQLITE_OK) return;
+@@ -55,6 +63,7 @@ void Database::abrir(const std::string& caminhoBanco) {
+     throw ErroBanco("Nao foi possivel abrir o banco SQLite: " + mensagem);
+ }
+ 
++// roda o sql, se falhar pega a mensagem de erro do sqlite e joga ErroBanco
+ void Database::executar(const std::string& sql) {
+     char* mensagemErro = nullptr;
+     const int resultado = sqlite3_exec(conexao_, sql.c_str(), nullptr, nullptr,
+@@ -66,6 +75,7 @@ void Database::executar(const std::string& sql) {
+     throw ErroBanco("Falha ao executar SQL: " + mensagem);
+ }
+ 
++// pergunta pro sqlite se existe alguma tabela (sem contar as tabelas internas dele)
+ bool Database::possuiTabelas() const {
+     constexpr const char* consulta =
+         "SELECT 1 FROM sqlite_master WHERE type = 'table' "
+@@ -83,6 +93,7 @@ bool Database::possuiTabelas() const {
+                    std::string(sqlite3_errmsg(conexao_)));
+ }
+ 
++// so aplica o schema.sql se o banco ainda estiver vazio
+ void Database::inicializarSchema(const std::string& caminhoSchema) {
+     if (!possuiTabelas()) executar(lerArquivo(caminhoSchema));
+ }
+diff --git a/src/infra/ErroCondominio.cpp b/src/infra/ErroCondominio.cpp
+index 2adcb62..2fc757a 100644
+--- a/src/infra/ErroCondominio.cpp
++++ b/src/infra/ErroCondominio.cpp
+@@ -4,12 +4,15 @@
+ 
+ using namespace std; 
+ 
++// guarda a mensagem com move pra nao copiar o texto
+ ErroCondominio:: ErroCondominio (string mensagem) : mensagem_(move(mensagem)){}; 
+ 
++// devolve a mensagem em texto de c, e isso que aparece quando a excecao e capturada
+ const char*  ErroCondominio :: what() const noexcept {
+     return mensagem_.c_str();
+ }
+ 
++// as tres subclasses so repassam a mensagem pra classe base
+ ErroValidacao :: ErroValidacao(const string& mensagem) : ErroCondominio(mensagem) {}
+ 
+ ErroRegraNegocio :: ErroRegraNegocio (const string& mensagem) : ErroCondominio(mensagem) {}
+diff --git a/src/infra/FabricaAreaComum.cpp b/src/infra/FabricaAreaComum.cpp
+index d1d503b..84e0cdc 100644
+--- a/src/infra/FabricaAreaComum.cpp
++++ b/src/infra/FabricaAreaComum.cpp
+@@ -2,6 +2,7 @@
+ 
+ #include <utility>
+ 
++// cada metodo so chama o registrar da classe base com o mesmo texto que fica salvo no banco
+ void FabricaAreaComum::registrarSalaoFestas(Criador criador) {
+     registrar("SalaoFestas", std::move(criador));
+ }
+diff --git a/src/infra/FabricaPessoa.cpp b/src/infra/FabricaPessoa.cpp
+index 9d012f3..d5543c4 100644
+--- a/src/infra/FabricaPessoa.cpp
++++ b/src/infra/FabricaPessoa.cpp
+@@ -2,6 +2,7 @@
+ 
+ #include <utility>
+ 
++// cada metodo so chama o registrar da classe base com o mesmo texto que fica salvo no banco
+ void FabricaPessoa::registrarMorador(Criador criador) {
+     registrar("morador", std::move(criador));
+ }
+diff --git a/src/interface/MenuMoradores.cpp b/src/interface/MenuMoradores.cpp
+index 2afa35c..e7738b1 100644
+--- a/src/interface/MenuMoradores.cpp
++++ b/src/interface/MenuMoradores.cpp
+@@ -54,12 +54,14 @@ void executar(const function<void()>& acao) {
+     }
+ }
+ 
++// converte o enum em texto pra mostrar no menu
+ string ocupacaoParaTexto(TipoOcupacao ocupacao) {
+     if (ocupacao == TipoOcupacao::Proprietario) return "Proprietario";
+     if (ocupacao == TipoOcupacao::Inquilino) return "Inquilino";
+     return "Dependente";
+ }
+ 
++// converte o enum em texto pra mostrar no menu
+ string cargoParaTexto(Cargo cargo) {
+     if (cargo == Cargo::Porteiro) return "Porteiro";
+     if (cargo == Cargo::Zelador) return "Zelador";
+@@ -98,6 +100,8 @@ Cargo lerCargo() {
+     }
+ }
+ 
++// imprime uma linha com os dados do morador
++// o dynamic_cast pega os campos que so o Morador tem
+ void imprimirMorador(const Pessoa& pessoa) {
+     cout << "ID " << pessoa.id() << " | " << pessoa.nome()
+          << " | CPF " << pessoa.cpf() << " | Tel " << pessoa.telefone();
+@@ -110,6 +114,7 @@ void imprimirMorador(const Pessoa& pessoa) {
+     cout << "\n";
+ }
+ 
++// imprime uma linha com os dados do funcionario (dynamic_cast, igual ao do morador)
+ void imprimirFuncionario(const Pessoa& pessoa) {
+     cout << "ID " << pessoa.id() << " | " << pessoa.nome()
+          << " | CPF " << pessoa.cpf() << " | Tel " << pessoa.telefone();
+@@ -124,6 +129,7 @@ void imprimirFuncionario(const Pessoa& pessoa) {
+ 
+ }  // namespace
+ 
++// guarda as referencias dos services
+ MenuMoradores::MenuMoradores(ApartamentoService& apartamentoService,
+                              MoradorService& moradorService,
+                              FuncionarioService& funcionarioService)
+@@ -131,6 +137,7 @@ MenuMoradores::MenuMoradores(ApartamentoService& apartamentoService,
+       moradorService_(moradorService),
+       funcionarioService_(funcionarioService) {}
+ 
++// menu do modulo: repete ate a pessoa escolher 0 (voltar)
+ void MenuMoradores::exibirMenu() {
+     int opcao = -1;
+     while (opcao != 0) {
+@@ -153,6 +160,8 @@ void MenuMoradores::exibirMenu() {
+     }
+ }
+ 
++// submenu de apartamentos
++// cada opcao roda dentro do executar(), assim o erro aparece na tela e o programa nao fecha
+ void MenuMoradores::menuApartamentos() {
+     int opcao = -1;
+     while (opcao != 0) {
+@@ -175,6 +184,7 @@ void MenuMoradores::menuApartamentos() {
+     }
+ }
+ 
++// submenu de moradores (mesma ideia do de apartamentos)
+ void MenuMoradores::menuMoradores() {
+     int opcao = -1;
+     while (opcao != 0) {
+@@ -199,6 +209,7 @@ void MenuMoradores::menuMoradores() {
+     }
+ }
+ 
++// submenu de funcionarios (mesma ideia)
+ void MenuMoradores::menuFuncionarios() {
+     int opcao = -1;
+     while (opcao != 0) {
+@@ -223,6 +234,7 @@ void MenuMoradores::menuFuncionarios() {
+ 
+ // ---------- apartamentos ----------
+ 
++// pede os dados e chama o service pra cadastrar
+ void MenuMoradores::cadastrarApartamento() {
+     cout << "\n--- Novo apartamento ---\n";
+     string bloco = lerLinha("Bloco: ");
+@@ -233,6 +245,7 @@ void MenuMoradores::cadastrarApartamento() {
+     cout << "Apartamento cadastrado! ID: " << id << "\n";
+ }
+ 
++// lista todos (ou avisa que nao tem nenhum)
+ void MenuMoradores::listarApartamentos() {
+     auto apartamentos = apartamentoService_.listar();
+     cout << "\n--- Apartamentos cadastrados ---\n";
+@@ -245,6 +258,7 @@ void MenuMoradores::listarApartamentos() {
+     }
+ }
+ 
++// pede o id e os dados novos e chama o service pra editar
+ void MenuMoradores::editarApartamento() {
+     cout << "\n--- Editar apartamento ---\n";
+     int id = lerInteiro("ID do apartamento: ");
+@@ -256,6 +270,7 @@ void MenuMoradores::editarApartamento() {
+     cout << "Apartamento atualizado!\n";
+ }
+ 
++// pede o id e chama o service pra remover
+ void MenuMoradores::removerApartamento() {
+     cout << "\n--- Remover apartamento ---\n";
+     int id = lerInteiro("ID do apartamento: ");
+@@ -266,6 +281,7 @@ void MenuMoradores::removerApartamento() {
+ 
+ // ---------- moradores ----------
+ 
++// pede os dados e chama o service pra cadastrar
+ void MenuMoradores::cadastrarMorador() {
+     cout << "\n--- Novo morador ---\n";
+     string nome = lerLinha("Nome: ");
+@@ -279,6 +295,7 @@ void MenuMoradores::cadastrarMorador() {
+     cout << "Morador cadastrado! ID: " << id << "\n";
+ }
+ 
++// lista todos (ou avisa que nao tem nenhum)
+ void MenuMoradores::listarMoradores() {
+     auto moradores = moradorService_.listar();
+     cout << "\n--- Moradores cadastrados ---\n";
+@@ -291,6 +308,7 @@ void MenuMoradores::listarMoradores() {
+     }
+ }
+ 
++// pede o id do apartamento e lista so os moradores dele
+ void MenuMoradores::listarMoradoresPorApartamento() {
+     cout << "\n--- Moradores por apartamento ---\n";
+     int apartamentoId = lerInteiro("ID do apartamento: ");
+@@ -305,6 +323,7 @@ void MenuMoradores::listarMoradoresPorApartamento() {
+     }
+ }
+ 
++// pede o id e os dados novos e chama o service pra editar
+ void MenuMoradores::editarMorador() {
+     cout << "\n--- Editar morador ---\n";
+     int id = lerInteiro("ID do morador: ");
+@@ -319,6 +338,7 @@ void MenuMoradores::editarMorador() {
+     cout << "Morador atualizado!\n";
+ }
+ 
++// pede o id e chama o service pra remover
+ void MenuMoradores::removerMorador() {
+     cout << "\n--- Remover morador ---\n";
+     int id = lerInteiro("ID do morador: ");
+@@ -329,6 +349,7 @@ void MenuMoradores::removerMorador() {
+ 
+ // ---------- funcionarios ----------
+ 
++// pede os dados e chama o service pra cadastrar
+ void MenuMoradores::cadastrarFuncionario() {
+     cout << "\n--- Novo funcionario ---\n";
+     string nome = lerLinha("Nome: ");
+@@ -342,6 +363,7 @@ void MenuMoradores::cadastrarFuncionario() {
+     cout << "Funcionario cadastrado! ID: " << id << "\n";
+ }
+ 
++// lista todos (ou avisa que nao tem nenhum)
+ void MenuMoradores::listarFuncionarios() {
+     auto funcionarios = funcionarioService_.listar();
+     cout << "\n--- Funcionarios cadastrados ---\n";
+@@ -354,6 +376,7 @@ void MenuMoradores::listarFuncionarios() {
+     }
+ }
+ 
++// pede o id e os dados novos e chama o service pra editar
+ void MenuMoradores::editarFuncionario() {
+     cout << "\n--- Editar funcionario ---\n";
+     int id = lerInteiro("ID do funcionario: ");
+@@ -368,6 +391,7 @@ void MenuMoradores::editarFuncionario() {
+     cout << "Funcionario atualizado!\n";
+ }
+ 
++// pede o id e chama o service pra remover
+ void MenuMoradores::removerFuncionario() {
+     cout << "\n--- Remover funcionario ---\n";
+     int id = lerInteiro("ID do funcionario: ");
+diff --git a/src/interface/MenuPrincipal.cpp b/src/interface/MenuPrincipal.cpp
+index 9213531..dd02786 100644
+--- a/src/interface/MenuPrincipal.cpp
++++ b/src/interface/MenuPrincipal.cpp
+@@ -4,6 +4,7 @@
+ #include "interface/TelaVisitas.h"
+ #include "interface/UtilQt.h"
+ 
++// monta a janela: titulo, tamanho e as tres abas
+ MenuPrincipal::MenuPrincipal(QWidget *parent)
+     : QMainWindow(parent) {
+     
+@@ -12,6 +13,7 @@ MenuPrincipal::MenuPrincipal(QWidget *parent)
+ 
+     abas = new QTabWidget(this);
+ 
++    // cada tela e um QWidget e vira uma aba
+     auto* moradores = new TelaMoradores(this);
+     auto* reservas = new TelaReservas(this);
+     auto* visitas = new TelaVisitas(this);
+@@ -19,6 +21,7 @@ MenuPrincipal::MenuPrincipal(QWidget *parent)
+     abas->addTab(reservas, "Areas e Reservas");
+     abas->addTab(visitas, "Portaria e Visitas");
+ 
++    // quando troca de aba, a tela daquela aba recarrega os dados do banco (signal e slot)
+     connect(abas, &QTabWidget::currentChanged, this,
+             [this, moradores, reservas, visitas](int indice) {
+         executarNaTela(this, [=] {
+@@ -31,4 +34,5 @@ MenuPrincipal::MenuPrincipal(QWidget *parent)
+     setCentralWidget(abas);
+ }
+ 
++// vazio de proposito: os widgets filhos sao apagados pelo qt sozinho (o pai e o dono)
+ MenuPrincipal::~MenuPrincipal() {}
+diff --git a/src/interface/MenuReservas.cpp b/src/interface/MenuReservas.cpp
+index e826aa4..a8f4861 100644
+--- a/src/interface/MenuReservas.cpp
++++ b/src/interface/MenuReservas.cpp
+@@ -4,6 +4,7 @@
+ 
+ namespace {
+ 
++// le uma linha, se a entrada acabar joga erro pro menu conseguir sair
+ std::string lerTexto(const char* pergunta) {
+     std::cout << pergunta;
+     std::string valor;
+@@ -11,6 +12,7 @@ std::string lerTexto(const char* pergunta) {
+     return valor;
+ }
+ 
++// repete a pergunta ate digitarem um numero inteiro valido
+ int lerInteiro(const char* pergunta) {
+     for (;;) {
+         const std::string entrada = lerTexto(pergunta);
+@@ -19,12 +21,13 @@ int lerInteiro(const char* pergunta) {
+             const int valor = std::stoi(entrada, &usados);
+             if (usados == entrada.size()) return valor;
+         } catch (const std::exception&) {
+-            // Repete a pergunta abaixo.
++            // nao faz nada aqui, a pergunta repete la embaixo
+         }
+         std::cout << "Numero invalido, tente novamente.\n";
+     }
+ }
+ 
++// repete a pergunta ate digitarem um numero decimal valido
+ double lerDecimal(const char* pergunta) {
+     for (;;) {
+         const std::string entrada = lerTexto(pergunta);
+@@ -33,7 +36,7 @@ double lerDecimal(const char* pergunta) {
+             const double valor = std::stod(entrada, &usados);
+             if (usados == entrada.size()) return valor;
+         } catch (const std::exception&) {
+-            // Repete a pergunta abaixo.
++            // nao faz nada aqui, a pergunta repete la embaixo
+         }
+         std::cout << "Valor invalido, tente novamente.\n";
+     }
+@@ -41,6 +44,7 @@ double lerDecimal(const char* pergunta) {
+ 
+ }  // namespace
+ 
++// repete o menu ate escolher 0 ou a entrada acabar, erros aparecem na tela
+ void MenuReservas::exibirMenu() {
+     while (std::cin) {
+         std::cout << "\n========================================\n";
+@@ -70,6 +74,7 @@ void MenuReservas::exibirMenu() {
+     }
+ }
+ 
++// lista as areas cadastradas (ou avisa que nao tem nenhuma)
+ void MenuReservas::listarAreas() {
+     auto areas = areaService_.listar();
+     std::cout << "\n--- Areas Comuns Cadastradas ---\n";
+@@ -86,6 +91,7 @@ void MenuReservas::listarAreas() {
+     }
+ }
+ 
++// pede os dados da area e chama o service pra cadastrar
+ void MenuReservas::cadastrarArea() {
+     std::cout << "\n--- Nova Area Comum ---\n";
+     const std::string tipo = lerTexto("Tipo (SalaoFestas, Piscina, Churrasqueira): ");
+@@ -103,6 +109,7 @@ void MenuReservas::cadastrarArea() {
+     }
+ }
+ 
++// pede os dados e chama o service, as regras de reserva estao la dentro
+ void MenuReservas::criarReserva() {
+     std::cout << "\n--- Nova Reserva ---\n";
+     const int moradorId = lerInteiro("ID do Morador: ");
+@@ -120,6 +127,7 @@ void MenuReservas::criarReserva() {
+     }
+ }
+ 
++// pede o id do morador e lista as reservas dele
+ void MenuReservas::listarMinhasReservas() {
+     std::cout << "\n--- Reservas do Morador ---\n";
+     const int moradorId = lerInteiro("ID do Morador: ");
+@@ -138,6 +146,7 @@ void MenuReservas::listarMinhasReservas() {
+     }
+ }
+ 
++// pede o id da reserva e chama o service pra cancelar
+ void MenuReservas::cancelarReserva() {
+     std::cout << "\n--- Cancelar Reserva ---\n";
+     const int reservaId = lerInteiro("ID da Reserva: ");
+diff --git a/src/interface/MenuVisitas.cpp b/src/interface/MenuVisitas.cpp
+index 5ad91a3..1ef78d9 100644
+--- a/src/interface/MenuVisitas.cpp
++++ b/src/interface/MenuVisitas.cpp
+@@ -64,8 +64,11 @@ void imprimirVisitas(const std::vector<std::unique_ptr<Visita>>& visitas) {
+ 
+ }  // namespace
+ 
++// guarda a referencia do service
+ MenuVisitas::MenuVisitas(VisitaService& visitaService) : visitaService_(visitaService) {}
+ 
++// menu da portaria: repete ate a pessoa escolher 0 (voltar)
++// cada opcao roda dentro do executar(), assim o erro aparece na tela e o programa nao fecha
+ void MenuVisitas::exibirMenu() {
+     int opcao = -1;
+     while (opcao != 0) {
+@@ -92,6 +95,7 @@ void MenuVisitas::exibirMenu() {
+     }
+ }
+ 
++// pede os dados e chama o service pra cadastrar o visitante
+ void MenuVisitas::cadastrarVisitante() {
+     std::cout << "\n--- Novo visitante ---\n";
+     std::string nome = lerLinha("Nome: ");
+@@ -101,6 +105,7 @@ void MenuVisitas::cadastrarVisitante() {
+     std::cout << "Visitante cadastrado! ID: " << id << "\n";
+ }
+ 
++// pede os ids e chama o service, as regras da portaria (so porteiro) estao la dentro
+ void MenuVisitas::registrarEntrada() {
+     std::cout << "\n--- Registrar entrada ---\n";
+     int visitanteId = lerInteiro("ID do visitante: ");
+@@ -110,6 +115,7 @@ void MenuVisitas::registrarEntrada() {
+     std::cout << "Entrada registrada! ID da visita: " << id << "\n";
+ }
+ 
++// pede o id da visita e chama o service pra registrar a saida
+ void MenuVisitas::registrarSaida() {
+     std::cout << "\n--- Registrar saida ---\n";
+     int visitaId = lerInteiro("ID da visita: ");
+@@ -117,11 +123,13 @@ void MenuVisitas::registrarSaida() {
+     std::cout << "Saida registrada!\n";
+ }
+ 
++// mostra so as visitas que ainda nao tem saida
+ void MenuVisitas::listarAbertas() {
+     std::cout << "\n--- Visitas em aberto ---\n";
+     imprimirVisitas(visitaService_.listarAbertas());
+ }
+ 
++// pede o id do apartamento e mostra todas as visitas dele
+ void MenuVisitas::historicoPorApartamento() {
+     std::cout << "\n--- Historico por apartamento ---\n";
+     int apartamentoId = lerInteiro("ID do apartamento: ");
+diff --git a/src/interface/TelaMoradores.cpp b/src/interface/TelaMoradores.cpp
+index becc5a8..fcdfc6c 100644
+--- a/src/interface/TelaMoradores.cpp
++++ b/src/interface/TelaMoradores.cpp
+@@ -13,6 +13,7 @@
+ 
+ namespace {
+ 
++// deixa a tabela no padrao: colunas, linha inteira selecionavel, uma por vez e sem editar a celula
+ void prepararTabela(QTableWidget* tabela, const QStringList& colunas) {
+     tabela->setColumnCount(colunas.size());
+     tabela->setHorizontalHeaderLabels(colunas);
+@@ -26,12 +27,14 @@ void prepararTabela(QTableWidget* tabela, const QStringList& colunas) {
+ 
+ }  // namespace
+ 
++// monta a tela inteira e liga os botoes aos services
+ TelaMoradores::TelaMoradores(QWidget* parent)
+     : QWidget(parent), apartamentos_(repoApartamentos_),
+       moradores_(repoPessoas_, repoApartamentos_) {
+     auto* pagina = new QWidget(this);
+     auto* layout = new QVBoxLayout(pagina);
+ 
++    // parte dos apartamentos: formulario, botoes e tabela
+     auto* grupoApartamentos = new QGroupBox("Apartamentos", pagina);
+     auto* layoutApartamentos = new QVBoxLayout(grupoApartamentos);
+     auto* formularioApartamento = new QFormLayout;
+@@ -63,6 +66,7 @@ TelaMoradores::TelaMoradores(QWidget* parent)
+     layoutApartamentos->addWidget(tabelaApartamentos_);
+     layout->addWidget(grupoApartamentos);
+ 
++    // parte dos moradores: formulario, botoes e tabela
+     auto* grupoMoradores = new QGroupBox("Moradores", pagina);
+     auto* layoutMoradores = new QVBoxLayout(grupoMoradores);
+     auto* formularioMorador = new QFormLayout;
+@@ -103,12 +107,15 @@ TelaMoradores::TelaMoradores(QWidget* parent)
+     layoutMoradores->addWidget(tabelaMoradores_);
+     layout->addWidget(grupoMoradores);
+ 
++    // poe tudo dentro de uma area com barra de rolagem
+     auto* rolagem = new QScrollArea(this);
+     rolagem->setWidgetResizable(true);
+     rolagem->setWidget(pagina);
+     auto* externo = new QVBoxLayout(this);
+     externo->addWidget(rolagem);
+ 
++    // ligacao dos botoes (signal clicked) com as acoes
++    // o executarNaTela mostra uma janela com o erro se o service jogar excecao
+     connect(cadastrarApartamento, &QPushButton::clicked, this, [this] {
+         executarNaTela(this, [this] {
+             apartamentos_.cadastrar(bloco_->text().trimmed().toStdString(),
+@@ -130,6 +137,7 @@ TelaMoradores::TelaMoradores(QWidget* parent)
+             atualizar();
+         });
+     });
++    // clicar numa linha preenche o formulario, fica facil de editar
+     connect(tabelaApartamentos_, &QTableWidget::cellClicked, this, [this](int linha, int) {
+         bloco_->setText(tabelaApartamentos_->item(linha, 1)->text());
+         numero_->setText(tabelaApartamentos_->item(linha, 2)->text());
+@@ -165,6 +173,7 @@ TelaMoradores::TelaMoradores(QWidget* parent)
+             atualizar();
+         });
+     });
++    // clicar numa linha busca o morador no banco e preenche o formulario
+     connect(tabelaMoradores_, &QTableWidget::cellClicked, this, [this](int linha, int) {
+         const int id = tabelaMoradores_->item(linha, 0)->text().toInt();
+         auto pessoa = repoPessoas_.buscarPorId(id);
+@@ -179,13 +188,16 @@ TelaMoradores::TelaMoradores(QWidget* parent)
+                                           "yyyy-MM-dd"));
+     });
+ 
++    // carrega os dados na primeira vez que a tela abre
+     atualizar();
+ }
+ 
++// recarrega as duas tabelas e a lista de apartamentos com os dados do banco
+ void TelaMoradores::atualizar() {
+     const auto apartamentos = apartamentos_.listar();
+     tabelaApartamentos_->setRowCount(0);
+     apartamento_->clear();
++    // o combo guarda o id de cada apartamento como dado escondido, o -1 e a opcao sem escolha
+     apartamento_->addItem("Selecione...", -1);
+     for (const auto& apto : apartamentos) {
+         const int linha = tabelaApartamentos_->rowCount();
+@@ -200,6 +212,7 @@ void TelaMoradores::atualizar() {
+     const auto moradores = moradores_.listar();
+     tabelaMoradores_->setRowCount(0);
+     for (const auto& pessoa : moradores) {
++        // o service devolve Pessoa, o dynamic_cast pega o Morador pra ler os campos dele
+         const auto* morador = dynamic_cast<const Morador*>(pessoa.get());
+         if (!morador) continue;
+         const int linha = tabelaMoradores_->rowCount();
+diff --git a/src/interface/TelaReservas.cpp b/src/interface/TelaReservas.cpp
+index 2fe4f4e..85561cd 100644
+--- a/src/interface/TelaReservas.cpp
++++ b/src/interface/TelaReservas.cpp
+@@ -13,6 +13,7 @@
+ 
+ namespace {
+ 
++// deixa a tabela no padrao: colunas, linha inteira selecionavel, uma por vez e sem editar a celula
+ void prepararTabela(QTableWidget* tabela, const QStringList& colunas) {
+     tabela->setColumnCount(colunas.size());
+     tabela->setHorizontalHeaderLabels(colunas);
+@@ -26,6 +27,7 @@ void prepararTabela(QTableWidget* tabela, const QStringList& colunas) {
+ 
+ }  // namespace
+ 
++// monta a tela inteira e liga os botoes aos services
+ TelaReservas::TelaReservas(QWidget* parent)
+     : QWidget(parent), repoAreas_(std::make_shared<RepositorioAreaComum>()),
+       repoReservas_(std::make_shared<RepositorioReserva>()), areas_(repoAreas_),
+@@ -33,6 +35,7 @@ TelaReservas::TelaReservas(QWidget* parent)
+     auto* pagina = new QWidget(this);
+     auto* layout = new QVBoxLayout(pagina);
+ 
++    // parte das areas comuns: formulario, botoes e tabela
+     auto* grupoAreas = new QGroupBox("Areas comuns", pagina);
+     auto* layoutAreas = new QVBoxLayout(grupoAreas);
+     auto* formularioArea = new QFormLayout;
+@@ -53,6 +56,7 @@ TelaReservas::TelaReservas(QWidget* parent)
+     fechamento_ = new QTimeEdit(QTime(23, 0), grupoAreas);
+     abertura_->setDisplayFormat("HH:mm");
+     fechamento_->setDisplayFormat("HH:mm");
++    // tipo, abertura e fechamento so valem no cadastro, na edicao o service so muda nome, capacidade e taxa
+     formularioArea->addRow("Tipo (so no cadastro)", tipo_);
+     formularioArea->addRow("Nome", nomeArea_);
+     formularioArea->addRow("Capacidade", capacidade_);
+@@ -77,11 +81,13 @@ TelaReservas::TelaReservas(QWidget* parent)
+     layoutAreas->addWidget(tabelaAreas_);
+     layout->addWidget(grupoAreas);
+ 
++    // parte das reservas: formulario, botoes e tabela
+     auto* grupoReservas = new QGroupBox("Reservas", pagina);
+     auto* layoutReservas = new QVBoxLayout(grupoReservas);
+     auto* formularioReserva = new QFormLayout;
+     morador_ = new QComboBox(grupoReservas);
+     area_ = new QComboBox(grupoReservas);
++    // a data comeca daqui a 2 dias e nao deixa escolher um dia que ja passou (setMinimumDate)
+     data_ = new QDateEdit(QDate::currentDate().addDays(2), grupoReservas);
+     morador_->setObjectName("reservaMorador");
+     area_->setObjectName("reservaArea");
+@@ -121,12 +127,15 @@ TelaReservas::TelaReservas(QWidget* parent)
+     layoutReservas->addWidget(tabelaReservas_);
+     layout->addWidget(grupoReservas);
+ 
++    // poe tudo dentro de uma area com barra de rolagem
+     auto* rolagem = new QScrollArea(this);
+     rolagem->setWidgetResizable(true);
+     rolagem->setWidget(pagina);
+     auto* externo = new QVBoxLayout(this);
+     externo->addWidget(rolagem);
+ 
++    // ligacao dos botoes (signal clicked) com as acoes
++    // o executarNaTela mostra uma janela com o erro se o service jogar excecao
+     connect(cadastrarArea, &QPushButton::clicked, this, [this] {
+         executarNaTela(this, [this] {
+             areas_.cadastrar(tipo_->currentText().toStdString(),
+@@ -149,6 +158,7 @@ TelaReservas::TelaReservas(QWidget* parent)
+             atualizar();
+         });
+     });
++    // clicar numa area preenche o formulario com os dados dela
+     connect(tabelaAreas_, &QTableWidget::cellClicked, this, [this](int linha, int) {
+         const int id = tabelaAreas_->item(linha, 0)->text().toInt();
+         auto selecionada = repoAreas_->buscarPorId(id);
+@@ -161,6 +171,7 @@ TelaReservas::TelaReservas(QWidget* parent)
+         fechamento_->setTime(QTime::fromString(QString::fromStdString(selecionada->getHoraFechamento()), "HH:mm"));
+     });
+ 
++    // os combos de morador e area guardam o id, o currentData() devolve esse id
+     connect(criarReserva, &QPushButton::clicked, this, [this] {
+         executarNaTela(this, [this] {
+             reservas_.criar(morador_->currentData().toInt(), area_->currentData().toInt(),
+@@ -172,6 +183,7 @@ TelaReservas::TelaReservas(QWidget* parent)
+     });
+     connect(consultarReservas, &QPushButton::clicked, this,
+             [this] { executarNaTela(this, [this] { atualizar(); }); });
++    // se o service devolver false (reserva nao existe) joga ErroRegraNegocio pra aparecer na janela
+     connect(cancelarReserva, &QPushButton::clicked, this, [this] {
+         executarNaTela(this, [this] {
+             if (!reservas_.cancelar(idSelecionado(tabelaReservas_))) {
+@@ -181,9 +193,11 @@ TelaReservas::TelaReservas(QWidget* parent)
+         });
+     });
+ 
++    // carrega os dados na primeira vez que a tela abre
+     atualizar();
+ }
+ 
++// recarrega a lista de moradores, as areas e as reservas com os dados do banco
+ void TelaReservas::atualizar() {
+     const auto pessoas = repoPessoas_.listar();
+     morador_->clear();
+diff --git a/src/interface/TelaVisitas.cpp b/src/interface/TelaVisitas.cpp
+index 3208606..0e39073 100644
+--- a/src/interface/TelaVisitas.cpp
++++ b/src/interface/TelaVisitas.cpp
+@@ -14,6 +14,7 @@
+ 
+ namespace {
+ 
++// deixa a tabela no padrao: colunas, linha inteira selecionavel, uma por vez e sem editar a celula
+ void prepararTabela(QTableWidget* tabela, const QStringList& colunas) {
+     tabela->setColumnCount(colunas.size());
+     tabela->setHorizontalHeaderLabels(colunas);
+@@ -27,11 +28,13 @@ void prepararTabela(QTableWidget* tabela, const QStringList& colunas) {
+ 
+ }  // namespace
+ 
++// monta a tela inteira e liga os botoes aos services
+ TelaVisitas::TelaVisitas(QWidget* parent)
+     : QWidget(parent), funcionarios_(repoPessoas_), visitas_(repoPessoas_, repoVisitas_) {
+     auto* pagina = new QWidget(this);
+     auto* layout = new QVBoxLayout(pagina);
+ 
++    // parte dos funcionarios: formulario, botoes e tabela
+     auto* grupoFuncionarios = new QGroupBox("Funcionarios", pagina);
+     auto* layoutFuncionarios = new QVBoxLayout(grupoFuncionarios);
+     auto* formularioFuncionario = new QFormLayout;
+@@ -73,6 +76,7 @@ TelaVisitas::TelaVisitas(QWidget* parent)
+     layoutFuncionarios->addWidget(tabelaFuncionarios_);
+     layout->addWidget(grupoFuncionarios);
+ 
++    // parte dos visitantes: formulario, botao e tabela
+     auto* grupoVisitantes = new QGroupBox("Visitantes", pagina);
+     auto* layoutVisitantes = new QVBoxLayout(grupoVisitantes);
+     auto* formularioVisitante = new QFormLayout;
+@@ -94,6 +98,7 @@ TelaVisitas::TelaVisitas(QWidget* parent)
+     layoutVisitantes->addWidget(tabelaVisitantes_);
+     layout->addWidget(grupoVisitantes);
+ 
++    // parte das visitas: escolhe visitante, apartamento e porteiro pra registrar entrada e saida
+     auto* grupoVisitas = new QGroupBox("Entrada, saida e historico de visitas", pagina);
+     auto* layoutVisitas = new QVBoxLayout(grupoVisitas);
+     auto* formularioVisita = new QFormLayout;
+@@ -115,6 +120,7 @@ TelaVisitas::TelaVisitas(QWidget* parent)
+     botoesVisita->addWidget(registrarEntrada);
+     botoesVisita->addWidget(registrarSaida);
+     layoutVisitas->addLayout(botoesVisita);
++    // combo pra filtrar o historico por apartamento
+     filtroApartamento_ = new QComboBox(grupoVisitas);
+     layoutVisitas->addWidget(filtroApartamento_);
+     tabelaVisitas_ = new QTableWidget(grupoVisitas);
+@@ -123,12 +129,15 @@ TelaVisitas::TelaVisitas(QWidget* parent)
+     layoutVisitas->addWidget(tabelaVisitas_);
+     layout->addWidget(grupoVisitas);
+ 
++    // poe tudo dentro de uma area com barra de rolagem
+     auto* rolagem = new QScrollArea(this);
+     rolagem->setWidgetResizable(true);
+     rolagem->setWidget(pagina);
+     auto* externo = new QVBoxLayout(this);
+     externo->addWidget(rolagem);
+ 
++    // ligacao dos botoes (signal clicked) com as acoes
++    // o executarNaTela mostra uma janela com o erro se o service jogar excecao
+     connect(cadastrarFuncionario, &QPushButton::clicked, this, [this] {
+         executarNaTela(this, [this] {
+             funcionarios_.cadastrar(nomeFuncionario_->text().trimmed().toStdString(),
+@@ -158,6 +167,7 @@ TelaVisitas::TelaVisitas(QWidget* parent)
+             atualizar();
+         });
+     });
++    // clicar numa linha busca o funcionario no banco e preenche o formulario
+     connect(tabelaFuncionarios_, &QTableWidget::cellClicked, this, [this](int linha, int) {
+         const int id = tabelaFuncionarios_->item(linha, 0)->text().toInt();
+         auto pessoa = repoPessoas_.buscarPorId(id);
+@@ -172,6 +182,7 @@ TelaVisitas::TelaVisitas(QWidget* parent)
+                                            "yyyy-MM-dd"));
+     });
+ 
++    // depois de cadastrar o visitante, ja deixa ele escolhido no combo da entrada
+     connect(cadastrarVisitante, &QPushButton::clicked, this, [this] {
+         executarNaTela(this, [this] {
+             const int id = visitas_.cadastrarVisitante(
+@@ -199,9 +210,11 @@ TelaVisitas::TelaVisitas(QWidget* parent)
+     connect(filtroApartamento_, &QComboBox::currentIndexChanged, this,
+             [this](int) { executarNaTela(this, [this] { atualizarVisitas(); }); });
+ 
++    // carrega os dados na primeira vez que a tela abre
+     atualizar();
+ }
+ 
++// recarrega funcionarios, visitantes, os combos e a tabela de visitas
+ void TelaVisitas::atualizar() {
+     const auto pessoas = repoPessoas_.listar();
+     tabelaFuncionarios_->setRowCount(0);
+@@ -220,6 +233,7 @@ void TelaVisitas::atualizar() {
+             tabelaFuncionarios_->setItem(linha, 3, new QTableWidgetItem(QString::fromStdString(funcionario->telefone())));
+             tabelaFuncionarios_->setItem(linha, 4, new QTableWidgetItem(cargo_->itemText(static_cast<int>(funcionario->cargo()))));
+             tabelaFuncionarios_->setItem(linha, 5, new QTableWidgetItem(QString::fromStdString(funcionario->turno())));
++            // so porteiro entra na lista de porteiros (a regra de verdade esta no VisitaService)
+             if (funcionario->ehPorteiro()) {
+                 porteiro_->addItem(QString::fromStdString(funcionario->nome()), funcionario->id());
+             }
+@@ -234,9 +248,11 @@ void TelaVisitas::atualizar() {
+         }
+     }
+ 
++    // guarda o filtro que estava escolhido pra nao perder quando recarregar o combo
+     const int filtroAnterior = filtroApartamento_->currentIndex() >= 0
+         ? filtroApartamento_->currentData().toInt() : -1;
+     apartamento_->clear();
++    // bloqueia os sinais enquanto recarrega, senao o combo chamaria atualizarVisitas varias vezes
+     filtroApartamento_->blockSignals(true);
+     filtroApartamento_->clear();
+     apartamento_->addItem("Selecione...", -1);
+@@ -251,6 +267,7 @@ void TelaVisitas::atualizar() {
+     atualizarVisitas();
+ }
+ 
++// mostra o historico do apartamento filtrado, ou todas as visitas se nao tiver filtro
+ void TelaVisitas::atualizarVisitas() {
+     const int apartamentoId = filtroApartamento_->currentData().toInt();
+     auto eventos = apartamentoId > 0
+diff --git a/src/main.cpp b/src/main.cpp
+index 170dbbd..e6b5f2c 100644
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -53,13 +53,16 @@ QHeaderView::section { background: #2F6F8F; color: white; padding: 6px;
+                        border: none; font-weight: bold; }
+ )QSS";
+ 
++// main da interface grafica: abre o banco, cria a janela e entra no loop do qt (app.exec)
+ int main(int argc, char *argv[]) {
+     QApplication app(argc, argv);
+     app.setStyle("Fusion");  // estilo base igual em qualquer sistema
+     app.setStyleSheet(QString::fromUtf8(kTema));  // aplica o tema nas telas todas
+ 
++    // com --smoke abre tudo na memoria e fecha sem mostrar janela (usado nos testes)
+     const bool smoke = argc >= 2 && QString::fromLocal8Bit(argv[1]) == "--smoke";
+     try {
++        // procura o schema.sql na pasta atual e, se nao achar, na pasta do executavel
+         QString schema = QDir::current().filePath("sql/schema.sql");
+         if (!QFileInfo::exists(schema)) {
+             schema = QDir(QApplication::applicationDirPath()).filePath("sql/schema.sql");
+@@ -68,6 +71,7 @@ int main(int argc, char *argv[]) {
+         if (!QFileInfo::exists(schema)) {
+             throw std::runtime_error("sql/schema.sql nao encontrado");
+         }
++        // no uso normal o banco e o arquivo condominio.db, no smoke e um banco so de memoria
+         Database::instancia(smoke ? ":memory:" : "condominio.db", schema.toStdString());
+         MenuPrincipal menu;
+         if (smoke) return 0;
+diff --git a/src/modelo/Apartamento.cpp b/src/modelo/Apartamento.cpp
+index 66357b2..9ad4df0 100644
+--- a/src/modelo/Apartamento.cpp
++++ b/src/modelo/Apartamento.cpp
+@@ -13,6 +13,7 @@ Apartamento::Apartamento(const string& bloco, const string& numero,
+     setAndar(andar);
+ }
+ 
++// getters: so devolvem o valor guardado
+ int Apartamento::getId() const { return id_; }
+ const string& Apartamento::getBloco() const { return bloco_; }
+ const string& Apartamento::getNumero() const { return numero_; }
+@@ -20,6 +21,7 @@ int Apartamento::getAndar() const { return andar_; }
+ 
+ void Apartamento::setId(int id) { id_ = id; }
+ 
++// setters validam antes de guardar e jogam ErroValidacao se o valor estiver errado
+ void Apartamento::setBloco(const string& bloco) {
+     if (bloco.empty()) {
+         throw ErroValidacao("O bloco não pode ser vazio.");
+@@ -64,14 +66,18 @@ bool Apartamento::removerMorador(int moradorId) {
+     return false;
+ }
+ 
++// devolve a lista por referencia constante, assim nao copia
+ const vector<Morador*>& Apartamento::getMoradores() const { return moradores_; }
+ 
++// converte o tamanho do vector pra int
+ int Apartamento::quantidadeMoradores() const {
+     return static_cast<int>(moradores_.size());
+ }
+ 
++// true se tem pelo menos um morador ligado
+ bool Apartamento::temMoradores() const { return !moradores_.empty(); }
+ 
++// monta o texto que as telas mostram, ex: Bloco A, apto 101 (andar 1)
+ string Apartamento::descricao() const {
+     return "Bloco " + bloco_ + ", apto " + numero_ +
+            " (andar " + to_string(andar_) + ")";
+diff --git a/src/modelo/AreaComum.cpp b/src/modelo/AreaComum.cpp
+index 2458057..c1299b3 100644
+--- a/src/modelo/AreaComum.cpp
++++ b/src/modelo/AreaComum.cpp
+@@ -9,6 +9,7 @@
+ 
+ namespace {
+ 
++// transforma HH:MM em minutos desde meia-noite (08:30 vira 510), joga ErroValidacao se o formato estiver errado
+ int minutos(const std::string& hora) {
+     if (hora.size() != 5 || hora[2] != ':' ||
+         !std::isdigit(static_cast<unsigned char>(hora[0])) ||
+@@ -23,6 +24,7 @@ int minutos(const std::string& hora) {
+     return h * 60 + m;
+ }
+ 
++// true se o texto so tem espacos (ou esta vazio)
+ bool somenteEspacos(const std::string& valor) {
+     return std::all_of(valor.begin(), valor.end(), [](unsigned char c) {
+         return std::isspace(c) != 0;
+@@ -31,6 +33,7 @@ bool somenteEspacos(const std::string& valor) {
+ 
+ }  // namespace
+ 
++// guarda os dados e joga ErroValidacao se algum valor for invalido
+ AreaComum::AreaComum(int id, std::string nome, int capacidade, double taxaBase,
+                      std::string horaAbertura, std::string horaFechamento)
+     : id_(id), nome_(std::move(nome)), capacidade_(capacidade), taxaBase_(taxaBase),
+@@ -42,6 +45,8 @@ AreaComum::AreaComum(int id, std::string nome, int capacidade, double taxaBase,
+     }
+ }
+ 
++// confere tudo de uma vez: convidados cabem, horario dentro do funcionamento,
++// fim depois do inicio e duracao dentro do limite que a subclasse passou
+ bool AreaComum::validarPeriodo(int convidados, const std::string& inicio,
+                               const std::string& fim, int duracaoMaximaMinutos) const {
+     const int inicioMinutos = minutos(inicio);
+diff --git a/src/modelo/Churrasqueira.cpp b/src/modelo/Churrasqueira.cpp
+index d3aacbc..ef0b892 100644
+--- a/src/modelo/Churrasqueira.cpp
++++ b/src/modelo/Churrasqueira.cpp
+@@ -2,8 +2,10 @@
+ 
+ #include "infra/ErroCondominio.h"
+ 
++// o texto tem que ser igual ao tipo salvo no banco (a fabrica usa ele)
+ std::string Churrasqueira::getTipo() const { return "Churrasqueira"; }
+ 
++// taxa fixa de 40 reais, nao importa o numero de convidados (so recusa numero invalido)
+ double Churrasqueira::calcularTaxa(int convidados) const {
+     if (convidados < 0 || convidados > getCapacidade()) {
+         throw ErroValidacao("Numero de convidados invalido");
+@@ -11,6 +13,7 @@ double Churrasqueira::calcularTaxa(int convidados) const {
+     return 40.0;
+ }
+ 
++// reaproveita o validarPeriodo da base com duracao maxima de 4 horas
+ bool Churrasqueira::validarReserva(int convidados, const std::string& inicio,
+                                   const std::string& fim) const {
+     return validarPeriodo(convidados, inicio, fim, 4 * 60);
+diff --git a/src/modelo/Funcionario.cpp b/src/modelo/Funcionario.cpp
+index 1d979c8..d423fea 100644
+--- a/src/modelo/Funcionario.cpp
++++ b/src/modelo/Funcionario.cpp
+@@ -2,6 +2,7 @@
+ 
+ using namespace std;
+ 
++// os dados comuns vao pra Pessoa, turno e data passam pelos setters que validam
+ Funcionario::Funcionario(string nome, string cpf, string telefone, Cargo cargo, // construtor 
+                          string turno, string dataAdmissao, int id)
+     : Pessoa(nome, cpf, telefone, id), cargo_(cargo) {
+@@ -17,6 +18,7 @@ void Funcionario::setTurno(const string& turno) { // turno
+     turno_ = textoObrigatorio(turno, "Turno");
+ }
+ 
++// confere o formato AAAA-MM-DD da data de admissao
+ void Funcionario::setDataAdmissao(const string& dataAdmissao) { 
+     dataAdmissao_ = dataIsoValida(dataAdmissao, "Data de admissao");
+ }
+\ No newline at end of file
+diff --git a/src/modelo/Morador.cpp b/src/modelo/Morador.cpp
+index 05860b7..afdeb78 100644
+--- a/src/modelo/Morador.cpp
++++ b/src/modelo/Morador.cpp
+@@ -5,6 +5,7 @@ using namespace std;
+ 
+ 
+ 
++// os dados comuns vao pra Pessoa e o resto passa pelos setters que validam
+ Morador::Morador(string nome, string cpf, string telefone, int apartamentoId,
+                  TipoOcupacao tipoOcupacao, string dataEntrada, int id)
+     : Pessoa(nome, cpf, telefone, id), tipoOcupacao_(tipoOcupacao) {
+@@ -12,10 +13,12 @@ Morador::Morador(string nome, string cpf, string telefone, int apartamentoId,
+     setDataEntrada(dataEntrada);
+ } // construtor 
+ 
++// texto que e salvo na coluna tipo da tabela pessoa
+ string Morador::tipo() const {
+     return "morador";
+ }
+ 
++// todo morador precisa de apartamento (id maior que zero)
+ void Morador::setApartamentoId(int apartamentoId) {
+     if (apartamentoId <= 0) {
+         throw ErroValidacao("O morador precisa estar vinculado a um apartamento.");
+@@ -23,6 +26,7 @@ void Morador::setApartamentoId(int apartamentoId) {
+     apartamentoId_ = apartamentoId;
+ }
+ 
++// confere o formato AAAA-MM-DD da data de entrada
+ void Morador::setDataEntrada(const string& dataEntrada) {
+     dataEntrada_ = dataIsoValida(dataEntrada, "Data de entrada");
+ }
+\ No newline at end of file
+diff --git a/src/modelo/Pessoa.cpp b/src/modelo/Pessoa.cpp
+index dcc3ce5..945c37a 100644
+--- a/src/modelo/Pessoa.cpp
++++ b/src/modelo/Pessoa.cpp
+@@ -6,7 +6,7 @@
+ using namespace std; 
+ 
+ 
+-//verificacao cpf 
++// parte do cpf: primeiro tira a formatacao (normalizarCpf), depois confere (cpfValido)
+ string Pessoa :: normalizarCpf (const string& cpf) { //tira tudo que nao for digito
+ 
+     string digitos; 
+@@ -22,7 +22,7 @@ string Pessoa :: normalizarCpf (const string& cpf) { //tira tudo que nao for dig
+ }
+ 
+ 
+-// VERIFICACAO CPF 
++// confere o cpf: 11 digitos, nao pode ter todos iguais e os 2 digitos verificadores tem que bater
+ 
+ bool Pessoa::cpfValido(const string& cpf) {
+     string digitos = normalizarCpf(cpf);
+@@ -41,7 +41,7 @@ bool todosIguais = true; // se tudo for igual recusa
+         return false;
+     }  
+ 
+-//regra de chegagem dos digitos verificadores 10 e 11 
++// 1o digito verificador: soma dos 9 primeiros digitos com pesos de 10 ate 2, e compara com o 10o digito
+ 
+ int soma = 0;
+     for (int i = 0; i < 9; i++) {
+@@ -55,6 +55,7 @@ int soma = 0;
+         return false;
+     }
+ 
++// 2o digito verificador: agora com os 10 primeiros digitos e pesos de 11 ate 2, compara com o 11o digito
+ soma = 0;
+     for (int i = 0; i < 10; i++) {
+         soma += (digitos[i] - '0') * (11 - i);
+@@ -66,6 +67,7 @@ soma = 0;
+     return dv2 == digitos[10] - '0';
+ }
+ 
++// tira os espacos das pontas e joga ErroValidacao se o texto ficar vazio
+ string Pessoa::textoObrigatorio(const string& valor, const string& campo) {
+     // tira os espacos das pontas e recusa texto que fica vazio (so espacos conta como vazio)
+     const char* espacos = " \t\r\n";
+@@ -77,7 +79,7 @@ string Pessoa::textoObrigatorio(const string& valor, const string& campo) {
+     return valor.substr(inicio, fim - inicio + 1);
+ }
+ 
+-// descrever os 4 sets 
++// setters: cada um valida o valor antes de guardar e joga ErroValidacao se estiver errado
+ 
+ void Pessoa::setId(int id) {
+     if (id < 0) {
+@@ -101,7 +103,7 @@ void Pessoa::setTelefone(const string& telefone) {
+     telefone_ = textoObrigatorio(telefone, "Telefone");
+ }
+ 
+-//definicao do construtor 
++// construtor: passa tudo pelos setters pra ja validar na criacao
+ 
+ Pessoa::Pessoa(string nome, string cpf, string telefone, int id) {
+     setId(id);
+@@ -110,6 +112,7 @@ Pessoa::Pessoa(string nome, string cpf, string telefone, int id) {
+     setTelefone(telefone);
+ }
+ 
++// confere o formato AAAA-MM-DD e depois se a data existe de verdade (mes, dia e ano bissexto)
+ string Pessoa::dataIsoValida(const string& data, const string& campo) {
+     // formato AAAA-MM-DD: tamanho 10, hifens nas posicoes 4 e 7 e o resto so digitos
+     bool formatoOk = data.size() == 10 && data[4] == '-' && data[7] == '-';
+diff --git a/src/modelo/Piscina.cpp b/src/modelo/Piscina.cpp
+index 53d023f..ecd6ab3 100644
+--- a/src/modelo/Piscina.cpp
++++ b/src/modelo/Piscina.cpp
+@@ -2,8 +2,10 @@
+ 
+ #include "infra/ErroCondominio.h"
+ 
++// o texto tem que ser igual ao tipo salvo no banco (a fabrica usa ele)
+ std::string Piscina::getTipo() const { return "Piscina"; }
+ 
++// piscina e gratis, mas recusa mais de 4 convidados
+ double Piscina::calcularTaxa(int convidados) const {
+     if (convidados < 0 || convidados > getCapacidade() || convidados > 4) {
+         throw ErroValidacao("Numero de convidados invalido para piscina");
+@@ -11,6 +13,7 @@ double Piscina::calcularTaxa(int convidados) const {
+     return 0.0;
+ }
+ 
++// no maximo 4 convidados e 2 horas de duracao
+ bool Piscina::validarReserva(int convidados, const std::string& inicio,
+                             const std::string& fim) const {
+     return convidados <= 4 && validarPeriodo(convidados, inicio, fim, 2 * 60);
+diff --git a/src/modelo/Reserva.cpp b/src/modelo/Reserva.cpp
+index 96a9f3f..5481384 100644
+--- a/src/modelo/Reserva.cpp
++++ b/src/modelo/Reserva.cpp
+@@ -8,8 +8,10 @@
+ 
+ namespace {
+ 
++// true se o caractere e um numero
+ bool digito(char c) { return std::isdigit(static_cast<unsigned char>(c)) != 0; }
+ 
++// le um pedaco do texto como numero, joga ErroValidacao se tiver letra no meio
+ int numero(const std::string& texto, std::size_t inicio, std::size_t tamanho) {
+     for (std::size_t i = inicio; i < inicio + tamanho; ++i) {
+         if (!digito(texto[i])) throw ErroValidacao("Data ou horario invalido");
+@@ -17,6 +19,7 @@ int numero(const std::string& texto, std::size_t inicio, std::size_t tamanho) {
+     return std::stoi(texto.substr(inicio, tamanho));
+ }
+ 
++// confere AAAA-MM-DD de verdade: mes de 1 a 12 e dia dentro do limite do mes (conta ano bissexto)
+ void validarData(const std::string& data) {
+     if (data.size() != 10 || data[4] != '-' || data[7] != '-') {
+         throw ErroValidacao("Data deve estar em AAAA-MM-DD");
+@@ -26,11 +29,13 @@ void validarData(const std::string& data) {
+     const int dia = numero(data, 8, 2);
+     if (ano == 0 || mes < 1 || mes > 12) throw ErroValidacao("Data invalida");
+     const int diasMes[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
++    // ano bissexto: divisivel por 400, ou divisivel por 4 mas nao por 100
+     const bool bissexto = ano % 400 == 0 || (ano % 4 == 0 && ano % 100 != 0);
+     const int limite = diasMes[mes - 1] + ((mes == 2 && bissexto) ? 1 : 0);
+     if (dia < 1 || dia > limite) throw ErroValidacao("Data invalida");
+ }
+ 
++// transforma HH:MM em minutos desde meia-noite
+ int minutos(const std::string& hora) {
+     if (hora.size() != 5 || hora[2] != ':') {
+         throw ErroValidacao("Horario deve estar em HH:MM");
+@@ -43,6 +48,7 @@ int minutos(const std::string& hora) {
+ 
+ }  // namespace
+ 
++// valida tudo na criacao: data, ids, convidados, valor e fim depois do inicio
+ Reserva::Reserva(int id, int moradorId, int areaId, std::string data,
+                  std::string horaInicio, std::string horaFim, int numConvidados,
+                  StatusReserva status, double valor)
+diff --git a/src/modelo/SalaoFestas.cpp b/src/modelo/SalaoFestas.cpp
+index 9dbce5d..b2aedc6 100644
+--- a/src/modelo/SalaoFestas.cpp
++++ b/src/modelo/SalaoFestas.cpp
+@@ -2,8 +2,10 @@
+ 
+ #include "infra/ErroCondominio.h"
+ 
++// o texto tem que ser igual ao tipo salvo no banco (a fabrica usa ele)
+ std::string SalaoFestas::getTipo() const { return "SalaoFestas"; }
+ 
++// taxa base mais 3 reais por convidado
+ double SalaoFestas::calcularTaxa(int convidados) const {
+     if (convidados < 0 || convidados > getCapacidade()) {
+         throw ErroValidacao("Numero de convidados invalido");
+@@ -11,6 +13,7 @@ double SalaoFestas::calcularTaxa(int convidados) const {
+     return getTaxaBase() + 3.0 * convidados;
+ }
+ 
++// reaproveita o validarPeriodo da base com duracao maxima de 8 horas
+ bool SalaoFestas::validarReserva(int convidados, const std::string& inicio,
+                                 const std::string& fim) const {
+     return validarPeriodo(convidados, inicio, fim, 8 * 60);
+diff --git a/src/modelo/Visita.cpp b/src/modelo/Visita.cpp
+index 53aa404..f470b9e 100644
+--- a/src/modelo/Visita.cpp
++++ b/src/modelo/Visita.cpp
+@@ -42,6 +42,7 @@ Visita::Visita(int visitanteId, int apartamentoId, int registradoPor,
+     setSaida(saida);
+ }
+ 
++// getters
+ int Visita::getId() const { return id_; }
+ int Visita::getVisitanteId() const { return visitanteId_; }
+ int Visita::getApartamentoId() const { return apartamentoId_; }
+@@ -90,8 +91,10 @@ void Visita::setSaida(const string& saida) {
+     saida_ = saida;
+ }
+ 
++// visita aberta e a que ainda nao tem saida
+ bool Visita::estaAberta() const { return saida_.empty(); }
+ 
++// texto resumido pras telas e pro terminal
+ string Visita::descricao() const {
+     string texto = "Visitante " + to_string(visitanteId_) + " no apto " +
+                    to_string(apartamentoId_) + ", entrada " + entrada_;
+diff --git a/src/modelo/Visitante.cpp b/src/modelo/Visitante.cpp
+index 68d8ea4..5ccca7d 100644
+--- a/src/modelo/Visitante.cpp
++++ b/src/modelo/Visitante.cpp
+@@ -2,8 +2,10 @@
+ 
+ using namespace std;
+ 
++// so repassa os dados pra Pessoa
+ Visitante::Visitante(string nome, string cpf, string telefone, int id) : Pessoa(nome, cpf, telefone, id) {}
+ 
++// texto que e salvo na coluna tipo da tabela pessoa
+ string Visitante::tipo() const {
+     return "visitante";
+ } 
+\ No newline at end of file
+diff --git a/src/repositorio/RepositorioApartamento.cpp b/src/repositorio/RepositorioApartamento.cpp
+index e10feda..b254e4f 100644
+--- a/src/repositorio/RepositorioApartamento.cpp
++++ b/src/repositorio/RepositorioApartamento.cpp
+@@ -54,6 +54,7 @@ unique_ptr<Apartamento> montar(Comando& stmt) {
+ 
+ }  // namespace
+ 
++// create: insere o apartamento e devolve o id
+ int RepositorioApartamento::inserir(const Apartamento& apartamento) {
+     Comando stmt = preparar(
+         "INSERT INTO apartamento (bloco, numero, andar) VALUES (?, ?, ?)");
+@@ -66,6 +67,7 @@ int RepositorioApartamento::inserir(const Apartamento& apartamento) {
+     return static_cast<int>(sqlite3_last_insert_rowid(conexao()));
+ }
+ 
++// read: busca um apartamento pelo id (nullptr se nao existir)
+ unique_ptr<Apartamento> RepositorioApartamento::buscarPorId(int id) {
+     Comando stmt = preparar(
+         "SELECT id, bloco, numero, andar FROM apartamento WHERE id = ?");
+@@ -81,6 +83,7 @@ unique_ptr<Apartamento> RepositorioApartamento::buscarPorId(int id) {
+     throw ErroBanco(string("erro ao buscar apartamento: ") + sqlite3_errmsg(conexao()));
+ }
+ 
++// read: lista todos ordenados por bloco e numero
+ vector<unique_ptr<Apartamento>> RepositorioApartamento::listar() {
+     Comando stmt = preparar(
+         "SELECT id, bloco, numero, andar FROM apartamento ORDER BY bloco, numero");
+@@ -97,6 +100,7 @@ vector<unique_ptr<Apartamento>> RepositorioApartamento::listar() {
+     return lista;
+ }
+ 
++// update: muda os dados do apartamento pelo id
+ bool RepositorioApartamento::atualizar(const Apartamento& apartamento) {
+     Comando stmt = preparar(
+         "UPDATE apartamento SET bloco = ?, numero = ?, andar = ? WHERE id = ?");
+@@ -110,6 +114,7 @@ bool RepositorioApartamento::atualizar(const Apartamento& apartamento) {
+     return sqlite3_changes(conexao()) > 0;
+ }
+ 
++// delete: apaga pelo id (o banco recusa se ainda tiver morador ligado nele)
+ bool RepositorioApartamento::remover(int id) {
+     Comando stmt = preparar("DELETE FROM apartamento WHERE id = ?");
+     sqlite3_bind_int(stmt.get(), 1, id);
+diff --git a/src/repositorio/RepositorioAreaComum.cpp b/src/repositorio/RepositorioAreaComum.cpp
+index 057bc6d..8a159df 100644
+--- a/src/repositorio/RepositorioAreaComum.cpp
++++ b/src/repositorio/RepositorioAreaComum.cpp
+@@ -10,6 +10,8 @@
+ 
+ namespace {
+ 
++// transforma a linha atual do banco na subclasse certa de AreaComum, usando a fabrica
++// as colunas vem na ordem do select: id, nome, tipo, capacidade, taxa, abertura, fechamento
+ std::unique_ptr<AreaComum> montar(const SqliteComando& comando) {
+     const int id = comando.inteiroEm(0);
+     const std::string nome = comando.textoEm(1);
+@@ -19,6 +21,7 @@ std::unique_ptr<AreaComum> montar(const SqliteComando& comando) {
+     const std::string abertura = comando.textoEm(5);
+     const std::string fechamento = comando.textoEm(6);
+ 
++    // uma fabrica nova por linha, cada criador monta o objeto com os dados que acabaram de ser lidos
+     FabricaAreaComum fabrica;
+     fabrica.registrarSalaoFestas([&] {
+         return std::make_unique<SalaoFestas>(id, nome, capacidade, taxa,
+@@ -37,6 +40,7 @@ std::unique_ptr<AreaComum> montar(const SqliteComando& comando) {
+ 
+ }  // namespace
+ 
++// create: insere a area e devolve o id
+ int RepositorioAreaComum::inserir(const AreaComum& entidade) {
+     SqliteComando comando(
+         "INSERT INTO area_comum (nome, tipo, capacidade, taxa_base, "
+@@ -51,6 +55,7 @@ int RepositorioAreaComum::inserir(const AreaComum& entidade) {
+     return comando.ultimoId();
+ }
+ 
++// read: busca pelo id (nullptr se nao existir)
+ std::unique_ptr<AreaComum> RepositorioAreaComum::buscarPorId(int id) {
+     SqliteComando comando(
+         "SELECT id, nome, tipo, capacidade, taxa_base, hora_abertura, "
+@@ -59,6 +64,7 @@ std::unique_ptr<AreaComum> RepositorioAreaComum::buscarPorId(int id) {
+     return comando.proxima() ? montar(comando) : nullptr;
+ }
+ 
++// read: lista todas as areas
+ std::vector<std::unique_ptr<AreaComum>> RepositorioAreaComum::listar() {
+     SqliteComando comando(
+         "SELECT id, nome, tipo, capacidade, taxa_base, hora_abertura, "
+@@ -68,6 +74,7 @@ std::vector<std::unique_ptr<AreaComum>> RepositorioAreaComum::listar() {
+     return resultado;
+ }
+ 
++// update: muda os dados da area pelo id
+ bool RepositorioAreaComum::atualizar(const AreaComum& entidade) {
+     SqliteComando comando(
+         "UPDATE area_comum SET nome = ?, tipo = ?, capacidade = ?, taxa_base = ?, "
+@@ -83,6 +90,7 @@ bool RepositorioAreaComum::atualizar(const AreaComum& entidade) {
+     return comando.alteradas() > 0;
+ }
+ 
++// delete: apaga a area pelo id
+ bool RepositorioAreaComum::remover(int id) {
+     SqliteComando comando("DELETE FROM area_comum WHERE id = ?");
+     comando.inteiro(1, id);
+diff --git a/src/repositorio/RepositorioPessoa.cpp b/src/repositorio/RepositorioPessoa.cpp
+index 6c6e006..3a3f31a 100644
+--- a/src/repositorio/RepositorioPessoa.cpp
++++ b/src/repositorio/RepositorioPessoa.cpp
+@@ -153,6 +153,7 @@ unique_ptr<Pessoa> montar(Comando& stmt) {
+ 
+ }  // namespace
+ 
++// create: insere na tabela pessoa e na tabela extra do tipo, tudo dentro de uma transacao
+ int RepositorioPessoa::inserir(const Pessoa& pessoa) {
+     Transacao transacao;
+ 
+@@ -167,6 +168,7 @@ int RepositorioPessoa::inserir(const Pessoa& pessoa) {
+     int id = static_cast<int>(sqlite3_last_insert_rowid(conexao()));
+ 
+     // depois a tabela extra do tipo (visitante nao tem)
++    // dynamic_cast descobre qual subclasse veio no ponteiro da classe base
+     if (const Morador* morador = dynamic_cast<const Morador*>(&pessoa)) {
+         Comando stmt = preparar(
+             "INSERT INTO morador (pessoa_id, apartamento_id, tipo_ocupacao, data_entrada) "
+@@ -193,6 +195,7 @@ int RepositorioPessoa::inserir(const Pessoa& pessoa) {
+     return id;
+ }
+ 
++// read: busca pelo id e ja devolve a subclasse certa (Morador, Funcionario ou Visitante)
+ unique_ptr<Pessoa> RepositorioPessoa::buscarPorId(int id) {
+     Comando stmt = preparar(string(SELECT_PESSOA) + "WHERE p.id = ?");
+     sqlite3_bind_int(stmt.get(), 1, id);
+@@ -207,6 +210,7 @@ unique_ptr<Pessoa> RepositorioPessoa::buscarPorId(int id) {
+     throw ErroBanco(string("erro ao buscar pessoa: ") + sqlite3_errmsg(conexao()));
+ }
+ 
++// read: lista todas as pessoas ordenadas por nome
+ vector<unique_ptr<Pessoa>> RepositorioPessoa::listar() {
+     Comando stmt = preparar(string(SELECT_PESSOA) + "ORDER BY p.nome");
+ 
+@@ -222,6 +226,7 @@ vector<unique_ptr<Pessoa>> RepositorioPessoa::listar() {
+     return lista;
+ }
+ 
++// update: muda os dados comuns e os da tabela extra do tipo, tambem em transacao
+ bool RepositorioPessoa::atualizar(const Pessoa& pessoa) {
+     Transacao transacao;
+ 
+@@ -269,6 +274,7 @@ bool RepositorioPessoa::atualizar(const Pessoa& pessoa) {
+     return true;
+ }
+ 
++// delete: apaga das tabelas extras e depois de pessoa, em transacao
+ bool RepositorioPessoa::remover(int id) {
+     Transacao transacao;
+ 
+diff --git a/src/repositorio/RepositorioReserva.cpp b/src/repositorio/RepositorioReserva.cpp
+index 57aa8f9..13a14a9 100644
+--- a/src/repositorio/RepositorioReserva.cpp
++++ b/src/repositorio/RepositorioReserva.cpp
+@@ -7,16 +7,19 @@
+ 
+ namespace {
+ 
++// o enum vira texto pra salvar no banco (ativa ou cancelada)
+ const char* statusTexto(StatusReserva status) {
+     return status == StatusReserva::ATIVA ? "ativa" : "cancelada";
+ }
+ 
++// o texto do banco vira enum de novo, joga ErroBanco se vier algo estranho
+ StatusReserva lerStatus(const std::string& texto) {
+     if (texto == "ativa") return StatusReserva::ATIVA;
+     if (texto == "cancelada") return StatusReserva::CANCELADA;
+     throw ErroBanco("Status de reserva desconhecido: " + texto);
+ }
+ 
++// monta uma Reserva com a linha atual (as colunas vem na ordem do select)
+ std::unique_ptr<Reserva> montar(const SqliteComando& comando) {
+     return std::make_unique<Reserva>(
+         comando.inteiroEm(0), comando.inteiroEm(1), comando.inteiroEm(2),
+@@ -24,6 +27,7 @@ std::unique_ptr<Reserva> montar(const SqliteComando& comando) {
+         comando.inteiroEm(6), lerStatus(comando.textoEm(7)), comando.realEm(8));
+ }
+ 
++// le todas as linhas do resultado e junta num vector
+ std::vector<std::unique_ptr<Reserva>> coletar(SqliteComando& comando) {
+     std::vector<std::unique_ptr<Reserva>> resultado;
+     while (comando.proxima()) resultado.push_back(montar(comando));
+@@ -32,6 +36,7 @@ std::vector<std::unique_ptr<Reserva>> coletar(SqliteComando& comando) {
+ 
+ }  // namespace
+ 
++// create: insere a reserva e devolve o id
+ int RepositorioReserva::inserir(const Reserva& entidade) {
+     SqliteComando comando(
+         "INSERT INTO reserva (morador_id, area_id, data, hora_inicio, hora_fim, "
+@@ -48,6 +53,7 @@ int RepositorioReserva::inserir(const Reserva& entidade) {
+     return comando.ultimoId();
+ }
+ 
++// read: busca pelo id (nullptr se nao existir)
+ std::unique_ptr<Reserva> RepositorioReserva::buscarPorId(int id) {
+     SqliteComando comando(
+         "SELECT id, morador_id, area_id, data, hora_inicio, hora_fim, "
+@@ -56,6 +62,7 @@ std::unique_ptr<Reserva> RepositorioReserva::buscarPorId(int id) {
+     return comando.proxima() ? montar(comando) : nullptr;
+ }
+ 
++// read: lista todas as reservas
+ std::vector<std::unique_ptr<Reserva>> RepositorioReserva::listar() {
+     SqliteComando comando(
+         "SELECT id, morador_id, area_id, data, hora_inicio, hora_fim, "
+@@ -63,6 +70,7 @@ std::vector<std::unique_ptr<Reserva>> RepositorioReserva::listar() {
+     return coletar(comando);
+ }
+ 
++// update: muda os dados da reserva (e assim que ela e cancelada)
+ bool RepositorioReserva::atualizar(const Reserva& entidade) {
+     SqliteComando comando(
+         "UPDATE reserva SET morador_id = ?, area_id = ?, data = ?, "
+@@ -81,6 +89,7 @@ bool RepositorioReserva::atualizar(const Reserva& entidade) {
+     return comando.alteradas() > 0;
+ }
+ 
++// delete: apaga a reserva pelo id
+ bool RepositorioReserva::remover(int id) {
+     SqliteComando comando("DELETE FROM reserva WHERE id = ?");
+     comando.inteiro(1, id);
+@@ -88,6 +97,7 @@ bool RepositorioReserva::remover(int id) {
+     return comando.alteradas() > 0;
+ }
+ 
++// reservas do morador, em ordem de data e hora
+ std::vector<std::unique_ptr<Reserva>> RepositorioReserva::buscarPorMorador(int moradorId) {
+     SqliteComando comando(
+         "SELECT id, morador_id, area_id, data, hora_inicio, hora_fim, "
+@@ -96,6 +106,7 @@ std::vector<std::unique_ptr<Reserva>> RepositorioReserva::buscarPorMorador(int m
+     return coletar(comando);
+ }
+ 
++// reservas da area naquele dia, em ordem de hora de inicio
+ std::vector<std::unique_ptr<Reserva>> RepositorioReserva::buscarPorAreaEData(
+     int areaId, const std::string& data) {
+     SqliteComando comando(
+diff --git a/src/repositorio/RepositorioVisita.cpp b/src/repositorio/RepositorioVisita.cpp
+index 351b617..d336a73 100644
+--- a/src/repositorio/RepositorioVisita.cpp
++++ b/src/repositorio/RepositorioVisita.cpp
+@@ -74,6 +74,7 @@ unique_ptr<Visita> montar(Comando& stmt) {
+ 
+ }  // namespace
+ 
++// create: insere a visita e devolve o id
+ int RepositorioVisita::inserir(const Visita& visita) {
+     Comando stmt = preparar(
+         "INSERT INTO visita (visitante_id, apartamento_id, registrado_por, entrada, saida) "
+@@ -85,6 +86,7 @@ int RepositorioVisita::inserir(const Visita& visita) {
+     return static_cast<int>(sqlite3_last_insert_rowid(conexao()));
+ }
+ 
++// read: busca uma visita pelo id (nullptr se nao existir)
+ unique_ptr<Visita> RepositorioVisita::buscarPorId(int id) {
+     Comando stmt = preparar(string(SELECT_VISITA) + " WHERE id = ?");
+     sqlite3_bind_int(stmt.get(), 1, id);
+@@ -99,6 +101,7 @@ unique_ptr<Visita> RepositorioVisita::buscarPorId(int id) {
+     throw ErroBanco(string("erro ao buscar visita: ") + sqlite3_errmsg(conexao()));
+ }
+ 
++// read: lista todas as visitas
+ vector<unique_ptr<Visita>> RepositorioVisita::listar() {
+     // mais antigas primeiro, o id desempata entradas no mesmo minuto
+     Comando stmt = preparar(string(SELECT_VISITA) + " ORDER BY entrada, id");
+@@ -115,6 +118,7 @@ vector<unique_ptr<Visita>> RepositorioVisita::listar() {
+     return lista;
+ }
+ 
++// update: muda os dados da visita (e assim que a saida e registrada)
+ bool RepositorioVisita::atualizar(const Visita& visita) {
+     Comando stmt = preparar(
+         "UPDATE visita SET visitante_id = ?, apartamento_id = ?, registrado_por = ?, "
+@@ -127,6 +131,7 @@ bool RepositorioVisita::atualizar(const Visita& visita) {
+     return sqlite3_changes(conexao()) > 0;
+ }
+ 
++// delete: apaga a visita pelo id
+ bool RepositorioVisita::remover(int id) {
+     Comando stmt = preparar("DELETE FROM visita WHERE id = ?");
+     sqlite3_bind_int(stmt.get(), 1, id);
+diff --git a/src/repositorio/SqliteComando.h b/src/repositorio/SqliteComando.h
+index 4cf2429..2489cb5 100644
+--- a/src/repositorio/SqliteComando.h
++++ b/src/repositorio/SqliteComando.h
+@@ -8,8 +8,11 @@
+ #include <memory>
+ #include <string>
+ 
++// embrulha um comando sql preparado do sqlite (raii: fecha sozinho quando o objeto some)
++// nos binds a posicao do ? comeca em 1, na leitura das colunas (xxxEm) comeca em 0
+ class SqliteComando {
+ public:
++    // prepara o sql, se der erro joga ErroBanco
+     explicit SqliteComando(const char* sql)
+         : banco_(Database::instancia().conexao()), stmt_(nullptr, sqlite3_finalize) {
+         sqlite3_stmt* preparado = nullptr;
+@@ -19,6 +22,7 @@ public:
+         stmt_.reset(preparado);
+     }
+ 
++    // liga um valor no ? da posicao indicada (inteiro, real e texto)
+     void inteiro(int coluna, int valor) {
+         conferir(sqlite3_bind_int(stmt_.get(), coluna, valor));
+     }
+@@ -29,32 +33,39 @@ public:
+         conferir(sqlite3_bind_text(stmt_.get(), coluna, valor.c_str(), -1,
+                                   SQLITE_TRANSIENT));
+     }
++    // vai pra proxima linha do resultado: true se tem linha, false se acabou
+     bool proxima() {
+         const int resultado = sqlite3_step(stmt_.get());
+         if (resultado == SQLITE_ROW) return true;
+         if (resultado == SQLITE_DONE) return false;
+         throw ErroBanco(std::string("Erro ao consultar SQLite: ") + sqlite3_errmsg(banco_));
+     }
++    // roda um insert, update ou delete
+     void executar() {
+         if (sqlite3_step(stmt_.get()) != SQLITE_DONE) {
+             throw ErroBanco(std::string("Erro ao gravar SQLite: ") + sqlite3_errmsg(banco_));
+         }
+     }
++    // le a coluna da linha atual (inteiro, real e texto)
+     int inteiroEm(int coluna) const { return sqlite3_column_int(stmt_.get(), coluna); }
+     double realEm(int coluna) const { return sqlite3_column_double(stmt_.get(), coluna); }
+     std::string textoEm(int coluna) const {
+         const auto* valor = sqlite3_column_text(stmt_.get(), coluna);
+         return valor != nullptr ? reinterpret_cast<const char*>(valor) : "";
+     }
++    // quantas linhas o ultimo comando mudou (0 quer dizer que o id nao existia)
+     int alteradas() const { return sqlite3_changes(banco_); }
++    // id gerado pelo ultimo insert
+     int ultimoId() const { return static_cast<int>(sqlite3_last_insert_rowid(banco_)); }
+ 
+ private:
++    // joga ErroBanco se o bind nao deu certo
+     void conferir(int resultado) const {
+         if (resultado != SQLITE_OK) {
+             throw ErroBanco(std::string("Erro ao vincular parametro: ") + sqlite3_errmsg(banco_));
+         }
+     }
+     sqlite3* banco_;
++    // unique_ptr com sqlite3_finalize como deleter: o comando e fechado sozinho
+     std::unique_ptr<sqlite3_stmt, decltype(&sqlite3_finalize)> stmt_;
+ };
+diff --git a/src/servico/ApartamentoService.cpp b/src/servico/ApartamentoService.cpp
+index bc2ead6..64758ae 100644
+--- a/src/servico/ApartamentoService.cpp
++++ b/src/servico/ApartamentoService.cpp
+@@ -21,8 +21,10 @@ bool existeDuplicado(IRepositorio<Apartamento>& repo, const Apartamento& novo, i
+ 
+ }  // namespace
+ 
++// guarda a referencia do repositorio
+ ApartamentoService::ApartamentoService(IRepositorio<Apartamento>& repo) : repo_(repo) {}
+ 
++// valida os dados, confere se ja existe o mesmo bloco e numero e salva
+ int ApartamentoService::cadastrar(const string& bloco, const string& numero, int andar) {
+     // o construtor valida os campos e joga ErroValidacao se estiver errado
+     Apartamento novo(bloco, numero, andar);
+@@ -33,14 +35,17 @@ int ApartamentoService::cadastrar(const string& bloco, const string& numero, int
+     return repo_.inserir(novo);
+ }
+ 
++// so repassa pro repositorio
+ vector<unique_ptr<Apartamento>> ApartamentoService::listar() {
+     return repo_.listar();
+ }
+ 
++// so repassa pro repositorio
+ unique_ptr<Apartamento> ApartamentoService::buscar(int id) {
+     return repo_.buscarPorId(id);
+ }
+ 
++// confere se o apartamento existe, valida os dados novos e ve se nao vira duplicado de outro
+ void ApartamentoService::editar(int id, const string& bloco, const string& numero, int andar) {
+     if (repo_.buscarPorId(id) == nullptr) {
+         throw ErroRegraNegocio("apartamento " + to_string(id) + " nao encontrado");
+@@ -56,12 +61,13 @@ void ApartamentoService::editar(int id, const string& bloco, const string& numer
+     }
+ }
+ 
++// confere se o apartamento existe e tenta remover
+ void ApartamentoService::remover(int id) {
+     if (repo_.buscarPorId(id) == nullptr) {
+         throw ErroRegraNegocio("apartamento " + to_string(id) + " nao encontrado");
+     }
+ 
+-    // RN08: o banco recusa apagar apartamento que ainda tem morador (chave estrangeira)
++    // rn08: o banco recusa apagar apartamento que ainda tem morador (chave estrangeira)
+     // se o erro for esse, avisa com uma mensagem de regra de negocio
+     try {
+         repo_.remover(id);
+diff --git a/src/servico/AreaComumService.cpp b/src/servico/AreaComumService.cpp
+index a4fef3c..d3ce1f3 100644
+--- a/src/servico/AreaComumService.cpp
++++ b/src/servico/AreaComumService.cpp
+@@ -9,14 +9,17 @@
+ #include <memory>
+ #include <utility>
+ 
++// versao padrao: usa o repositorio do sqlite
+ AreaComumService::AreaComumService()
+     : repo_(std::make_shared<RepositorioAreaComum>()) {}
+ 
++// versao que recebe o repositorio, joga ErroValidacao se vier vazio
+ AreaComumService::AreaComumService(std::shared_ptr<IRepositorioAreaComum> repo)
+     : repo_(std::move(repo)) {
+     if (!repo_) throw ErroValidacao("Repositorio de areas nao informado");
+ }
+ 
++// escolhe a subclasse pelo texto do tipo, se for um tipo desconhecido joga ErroValidacao
+ int AreaComumService::cadastrar(const std::string& tipo, const std::string& nome,
+                                 int capacidade, double taxaBase,
+                                 const std::string& abertura,
+@@ -36,10 +39,13 @@ int AreaComumService::cadastrar(const std::string& tipo, const std::string& nome
+     throw ErroValidacao("Tipo de area comum desconhecido: " + tipo);
+ }
+ 
++// so repassa pro repositorio
+ std::vector<std::unique_ptr<AreaComum>> AreaComumService::listar() {
+     return repo_->listar();
+ }
+ 
++// busca a area atual pra manter o tipo e os horarios, e recria o objeto com os dados novos
++// devolve false se o id nao existe
+ bool AreaComumService::editar(int id, const std::string& nome, int capacidade,
+                               double taxaBase) {
+     auto atual = repo_->buscarPorId(id);
+@@ -62,6 +68,7 @@ bool AreaComumService::editar(int id, const std::string& nome, int capacidade,
+     throw ErroBanco("Tipo de area comum desconhecido: " + tipo);
+ }
+ 
++// tenta remover, se o banco recusar por chave estrangeira (area com reserva) vira ErroRegraNegocio
+ bool AreaComumService::remover(int id) {
+     // o banco recusa apagar area que tem reserva (chave estrangeira); avisa com regra de negocio
+     try {
+diff --git a/src/servico/FuncionarioService.cpp b/src/servico/FuncionarioService.cpp
+index f4fa3c2..1d7c827 100644
+--- a/src/servico/FuncionarioService.cpp
++++ b/src/servico/FuncionarioService.cpp
+@@ -7,7 +7,7 @@ using namespace std;  // permitido em .cpp (so e proibido nos .h)
+ 
+ namespace {
+ 
+-// RN07: o cpf tem que ser unico entre todas as pessoas (morador, funcionario e visitante)
++// rn07: o cpf tem que ser unico entre todas as pessoas (morador, funcionario e visitante)
+ // ignorarId e o id da propria pessoa na edicao (0 no cadastro)
+ bool cpfEmUso(IRepositorio<Pessoa>& repo, const string& cpf, int ignorarId) {
+     for (const auto& pessoa : repo.listar()) {
+@@ -28,9 +28,11 @@ void garantirFuncionario(IRepositorio<Pessoa>& repo, int id) {
+ 
+ }  // namespace
+ 
++// guarda a referencia do repositorio
+ FuncionarioService::FuncionarioService(IRepositorio<Pessoa>& repoPessoa)
+     : repoPessoa_(repoPessoa) {}
+ 
++// valida pelo construtor, confere se o cpf ja existe (RN07) e salva
+ int FuncionarioService::cadastrar(const string& nome, const string& cpf, const string& telefone,
+                                   Cargo cargo, const string& turno, const string& dataAdmissao) {
+     // o construtor valida nome, cpf, telefone, turno e data (ErroValidacao)
+@@ -42,6 +44,7 @@ int FuncionarioService::cadastrar(const string& nome, const string& cpf, const s
+     return repoPessoa_.inserir(novo);
+ }
+ 
++// pega todas as pessoas e fica so com os funcionarios (dynamic_cast)
+ vector<unique_ptr<Pessoa>> FuncionarioService::listar() {
+     vector<unique_ptr<Pessoa>> funcionarios;
+     for (auto& pessoa : repoPessoa_.listar()) {
+@@ -52,6 +55,7 @@ vector<unique_ptr<Pessoa>> FuncionarioService::listar() {
+     return funcionarios;
+ }
+ 
++// confere que e um funcionario, valida os dados novos e ve se o cpf nao e de outra pessoa
+ void FuncionarioService::editar(int id, const string& nome, const string& cpf,
+                                 const string& telefone, Cargo cargo, const string& turno,
+                                 const string& dataAdmissao) {
+@@ -67,6 +71,7 @@ void FuncionarioService::editar(int id, const string& nome, const string& cpf,
+     }
+ }
+ 
++// confere que e um funcionario e tenta remover
+ void FuncionarioService::remover(int id) {
+     garantirFuncionario(repoPessoa_, id);
+ 
+diff --git a/src/servico/MoradorService.cpp b/src/servico/MoradorService.cpp
+index 81bd121..569ec16 100644
+--- a/src/servico/MoradorService.cpp
++++ b/src/servico/MoradorService.cpp
+@@ -14,7 +14,7 @@ void garantirApartamento(IRepositorio<Apartamento>& repo, int apartamentoId) {
+     }
+ }
+ 
+-// RN07: o cpf tem que ser unico entre todas as pessoas (morador, funcionario e visitante)
++// rn07: o cpf tem que ser unico entre todas as pessoas (morador, funcionario e visitante)
+ // ignorarId e o id da propria pessoa na edicao (0 no cadastro)
+ bool cpfEmUso(IRepositorio<Pessoa>& repo, const string& cpf, int ignorarId) {
+     for (const auto& pessoa : repo.listar()) {
+@@ -35,9 +35,11 @@ void garantirMorador(IRepositorio<Pessoa>& repo, int id) {
+ 
+ }  // namespace
+ 
++// guarda as referencias dos dois repositorios
+ MoradorService::MoradorService(IRepositorio<Pessoa>& repoPessoa, IRepositorio<Apartamento>& repoApto)
+     : repoPessoa_(repoPessoa), repoApto_(repoApto) {}
+ 
++// valida pelo construtor, ve se o apartamento existe, ve se o cpf ja existe (RN07) e salva
+ int MoradorService::cadastrar(const string& nome, const string& cpf, const string& telefone,
+                               int apartamentoId, TipoOcupacao tipoOcupacao,
+                               const string& dataEntrada) {
+@@ -52,6 +54,7 @@ int MoradorService::cadastrar(const string& nome, const string& cpf, const strin
+     return repoPessoa_.inserir(novo);
+ }
+ 
++// pega todas as pessoas e fica so com os moradores (dynamic_cast)
+ vector<unique_ptr<Pessoa>> MoradorService::listar() {
+     vector<unique_ptr<Pessoa>> moradores;
+     for (auto& pessoa : repoPessoa_.listar()) {
+@@ -62,6 +65,7 @@ vector<unique_ptr<Pessoa>> MoradorService::listar() {
+     return moradores;
+ }
+ 
++// so os moradores daquele apartamento (antes confere se o apartamento existe)
+ vector<unique_ptr<Pessoa>> MoradorService::listarPorApartamento(int apartamentoId) {
+     garantirApartamento(repoApto_, apartamentoId);
+ 
+@@ -75,6 +79,7 @@ vector<unique_ptr<Pessoa>> MoradorService::listarPorApartamento(int apartamentoI
+     return moradores;
+ }
+ 
++// confere que e um morador, valida os dados novos, o apartamento e o cpf
+ void MoradorService::editar(int id, const string& nome, const string& cpf,
+                             const string& telefone, int apartamentoId,
+                             TipoOcupacao tipoOcupacao, const string& dataEntrada) {
+@@ -92,10 +97,11 @@ void MoradorService::editar(int id, const string& nome, const string& cpf,
+     }
+ }
+ 
++// confere que e um morador e tenta remover
+ void MoradorService::remover(int id) {
+     garantirMorador(repoPessoa_, id);
+ 
+-    // RN08: o banco recusa apagar morador que tem reserva (chave estrangeira)
++    // rn08: o banco recusa apagar morador que tem reserva (chave estrangeira)
+     // se o erro for esse, avisa com uma mensagem de regra de negocio
+     try {
+         if (!repoPessoa_.remover(id)) {
+diff --git a/src/servico/ReservaService.cpp b/src/servico/ReservaService.cpp
+index c52fe4a..63080d7 100644
+--- a/src/servico/ReservaService.cpp
++++ b/src/servico/ReservaService.cpp
+@@ -12,6 +12,7 @@
+ 
+ namespace {
+ 
++// junta a data e a hora de inicio da reserva num horario, pra comparar com a hora de agora
+ std::chrono::system_clock::time_point inicioReserva(const Reserva& reserva) {
+     std::tm momento{};
+     momento.tm_isdst = -1;
+@@ -27,10 +28,12 @@ std::chrono::system_clock::time_point inicioReserva(const Reserva& reserva) {
+ 
+ }  // namespace
+ 
++// versao padrao: usa os repositorios do sqlite
+ ReservaService::ReservaService()
+     : ReservaService(std::make_shared<RepositorioReserva>(),
+                      std::make_shared<RepositorioAreaComum>()) {}
+ 
++// versao que recebe os repositorios e o relogio, recusa se faltar algum
+ ReservaService::ReservaService(
+     std::shared_ptr<IRepositorioReserva> repoReserva,
+     std::shared_ptr<IRepositorioAreaComum> repoArea,
+@@ -42,10 +45,11 @@ ReservaService::ReservaService(
+     }
+ }
+ 
++// aplica as regras RN01 a RN03, recusa reserva no passado e salva, devolve o id da reserva
+ int ReservaService::criar(int moradorId, int areaId, const std::string& data,
+                           const std::string& horaInicio,
+                           const std::string& horaFim, int convidados) {
+-    // Valida formato da data, periodo e identificadores antes de consultar o banco.
++    // criar o objeto Reserva ja valida data, periodo e ids antes de mexer no banco
+     Reserva candidata(0, moradorId, areaId, data, horaInicio, horaFim,
+                       convidados, StatusReserva::ATIVA, 0.0);
+     // nao deixa reservar em data ou horario que ja passou
+@@ -54,10 +58,13 @@ int ReservaService::criar(int moradorId, int areaId, const std::string& data,
+     }
+     auto area = repoArea_->buscarPorId(areaId);
+     if (!area) throw ErroRegraNegocio("Area comum nao encontrada");
++    // polimorfismo: cada area (salao, piscina, churrasqueira) valida do seu jeito
+     if (!area->validarReserva(convidados, horaInicio, horaFim)) {
+         throw ErroRegraNegocio("Capacidade, duracao ou horario fora das regras da area");
+     }
+ 
++    // rn01: recusa se alguma reserva ativa da mesma area e do mesmo dia se sobrepoe
++    // (comeca antes do fim da outra e termina depois do comeco da outra)
+     for (const auto& existente : repoReserva_->buscarPorAreaEData(areaId, data)) {
+         if (existente && existente->getStatus() == StatusReserva::ATIVA &&
+             horaInicio < existente->getHoraFim() &&
+@@ -66,6 +73,7 @@ int ReservaService::criar(int moradorId, int areaId, const std::string& data,
+         }
+     }
+ 
++    // o valor vem do calcularTaxa da propria area (polimorfismo de novo)
+     Reserva nova(0, moradorId, areaId, data, horaInicio, horaFim,
+                  convidados, StatusReserva::ATIVA, area->calcularTaxa(convidados));
+     // a area ja foi conferida acima, entao se o banco recusar por chave estrangeira
+@@ -80,6 +88,7 @@ int ReservaService::criar(int moradorId, int areaId, const std::string& data,
+     }
+ }
+ 
++// so cancela reserva que existe, que esta ativa e que comeca daqui a 24 horas ou mais (RN04)
+ bool ReservaService::cancelar(int reservaId) {
+     if (reservaId <= 0) throw ErroValidacao("ID de reserva invalido");
+     auto reserva = repoReserva_->buscarPorId(reservaId);
+@@ -87,6 +96,7 @@ bool ReservaService::cancelar(int reservaId) {
+     if (reserva->getStatus() == StatusReserva::CANCELADA) {
+         throw ErroRegraNegocio("Reserva ja esta cancelada");
+     }
++    // faltam menos de 24 horas pra comecar
+     if (inicioReserva(*reserva) - agora_() < std::chrono::hours(24)) {
+         throw ErroRegraNegocio("Cancelamento exige 24 horas de antecedencia");
+     }
+@@ -94,6 +104,7 @@ bool ReservaService::cancelar(int reservaId) {
+     return repoReserva_->atualizar(*reserva);
+ }
+ 
++// devolve copias das reservas do morador (o repositorio devolve ponteiros)
+ std::vector<Reserva> ReservaService::listarPorMorador(int moradorId) {
+     if (moradorId <= 0) throw ErroValidacao("ID de morador invalido");
+     std::vector<Reserva> resultado;
+@@ -103,6 +114,7 @@ std::vector<Reserva> ReservaService::listarPorMorador(int moradorId) {
+     return resultado;
+ }
+ 
++// devolve copias das reservas da area naquele dia
+ std::vector<Reserva> ReservaService::listarPorArea(
+     int areaId, const std::string& data) {
+     if (areaId <= 0) throw ErroValidacao("ID de area invalido");
+diff --git a/src/servico/VisitaService.cpp b/src/servico/VisitaService.cpp
+index 8117b1f..11e5b92 100644
+--- a/src/servico/VisitaService.cpp
++++ b/src/servico/VisitaService.cpp
+@@ -16,6 +16,7 @@ namespace {
+ string agoraTexto() {
+     time_t tempo = chrono::system_clock::to_time_t(chrono::system_clock::now());
+     tm local{};
++// localtime_s e do windows e localtime_r e do linux e mac, cada sistema tem a sua
+ #if defined(_WIN32)
+     localtime_s(&local, &tempo);
+ #else
+@@ -38,10 +39,12 @@ bool cpfEmUso(IRepositorio<Pessoa>& repo, const string& cpf) {
+ 
+ }  // namespace
+ 
++// guarda as referencias dos repositorios
+ VisitaService::VisitaService(IRepositorio<Pessoa>& repoPessoa,
+                              IRepositorio<Visita>& repoVisita)
+     : repoPessoa_(repoPessoa), repoVisita_(repoVisita) {}
+ 
++// valida pelo construtor, confere se o cpf ja existe (RN07) e salva
+ int VisitaService::cadastrarVisitante(const string& nome, const string& cpf,
+                                       const string& telefone) {
+     // o construtor valida nome, cpf e telefone (ErroValidacao)
+@@ -53,6 +56,8 @@ int VisitaService::cadastrarVisitante(const string& nome, const string& cpf,
+     return repoPessoa_.inserir(novo);
+ }
+ 
++// confere o visitante e o porteiro (RN05) e grava a entrada com a hora de agora
++// (se o apartamento nao existir o banco recusa e vira ErroRegraNegocio)
+ int VisitaService::registrarEntrada(int visitanteId, int apartamentoId, int porteiroId) {
+     // o visitante precisa existir e ser mesmo um visitante
+     unique_ptr<Pessoa> visitante = repoPessoa_.buscarPorId(visitanteId);
+@@ -81,6 +86,7 @@ int VisitaService::registrarEntrada(int visitanteId, int apartamentoId, int port
+     }
+ }
+ 
++// a visita tem que existir e estar aberta, grava a saida com a hora de agora
+ void VisitaService::registrarSaida(int visitaId) {
+     unique_ptr<Visita> visita = repoVisita_.buscarPorId(visitaId);
+     if (!visita) {
+@@ -95,6 +101,7 @@ void VisitaService::registrarSaida(int visitaId) {
+     repoVisita_.atualizar(*visita);
+ }
+ 
++// pega todas as visitas e fica so com as que nao tem saida
+ vector<unique_ptr<Visita>> VisitaService::listarAbertas() {
+     vector<unique_ptr<Visita>> abertas;
+     for (auto& visita : repoVisita_.listar()) {
+@@ -105,6 +112,7 @@ vector<unique_ptr<Visita>> VisitaService::listarAbertas() {
+     return abertas;
+ }
+ 
++// pega todas as visitas e fica so com as daquele apartamento
+ vector<unique_ptr<Visita>> VisitaService::historicoPorApartamento(int apartamentoId) {
+     vector<unique_ptr<Visita>> historico;
+     for (auto& visita : repoVisita_.listar()) {
+diff --git a/src/terminal/main_terminal.cpp b/src/terminal/main_terminal.cpp
+index 6308e2f..fa2d107 100644
+--- a/src/terminal/main_terminal.cpp
++++ b/src/terminal/main_terminal.cpp
+@@ -14,10 +14,12 @@
+ #include <iostream>
+ #include <string>
+ 
++// main do terminal: abre o banco, monta repositorios, services e menus e mostra o menu principal
+ int main(int argc, char* argv[]) {
+     try {
+-        // O CMake copia sql/ para a pasta de build; na raiz do projeto ele ja existe.
++        // o cmake copia a pasta sql pra pasta de build, e na raiz do projeto ela ja existe
+         Database::instancia("condominio.db", "sql/schema.sql");
++        // com --smoke so abre o banco e sai (usado no teste automatico)
+         if (argc == 2 && std::string(argv[1]) == "--smoke") {
+             std::cout << "Terminal e banco inicializados.\n";
+             return 0;
+@@ -27,6 +29,8 @@ int main(int argc, char* argv[]) {
+             return 2;
+         }
+ 
++        // montagem de baixo pra cima: repositorios -> services -> menus
++        // cada um recebe o de baixo por referencia
+         RepositorioApartamento repoApartamentos;
+         RepositorioPessoa repoPessoas;
+         ApartamentoService apartamentos(repoApartamentos);
+@@ -38,6 +42,7 @@ int main(int argc, char* argv[]) {
+         VisitaService visitas(repoPessoas, repoVisitas);
+         MenuVisitas menuVisitas(visitas);
+ 
++        // repete o menu principal ate digitar 0 ou a entrada acabar
+         std::string opcao;
+         while (std::cin) {
+             std::cout << "\n=== Sistema de Gestao de Condominio ===\n"
+diff --git a/tests/test_cenarios_integracao_d02.cpp b/tests/test_cenarios_integracao_d02.cpp
+index f25f214..ff9e862 100644
+--- a/tests/test_cenarios_integracao_d02.cpp
++++ b/tests/test_cenarios_integracao_d02.cpp
+@@ -1,3 +1,4 @@
++// os 10 cenarios de integracao D02 (descritos em docs/testes.md), usando services e repositorios reais num banco em memoria
+ #include "infra/Database.h"
+ #include "infra/ErroCondominio.h"
+ #include "modelo/Morador.h"
+@@ -25,10 +26,12 @@
+ 
+ namespace {
+ 
++// joga excecao se a condicao for falsa, e assim que o teste falha
+ void exigir(bool condicao, const char* mensagem) {
+     if (!condicao) throw std::runtime_error(mensagem);
+ }
+ 
++// espera que a acao jogue ErroRegraNegocio, se nao jogar o teste falha
+ void exigirRegra(const std::function<void()>& acao, const char* mensagem) {
+     bool rejeitada = false;
+     try { acao(); }
+@@ -36,6 +39,7 @@ void exigirRegra(const std::function<void()>& acao, const char* mensagem) {
+     exigir(rejeitada, mensagem);
+ }
+ 
++// devolve um horario fixo em maio de 2030, assim o resultado nao depende do dia em que o teste roda
+ std::chrono::system_clock::time_point horarioFixo(int dia, int hora) {
+     std::tm data{};
+     data.tm_year = 2030 - 1900;
+@@ -46,6 +50,7 @@ std::chrono::system_clock::time_point horarioFixo(int dia, int hora) {
+     return std::chrono::system_clock::from_time_t(std::mktime(&data));
+ }
+ 
++// roda um cenario e imprime se passou ou falhou
+ void executar(const char* codigo, const std::function<void()>& acao) {
+     try {
+         acao();
+diff --git a/tests/test_correcoes_bugs.cpp b/tests/test_correcoes_bugs.cpp
+index 3763d64..4a29c3d 100644
+--- a/tests/test_correcoes_bugs.cpp
++++ b/tests/test_correcoes_bugs.cpp
+@@ -1,4 +1,4 @@
+-// Testes das correcoes de bugs: datas validas, texto so com espacos, erros de chave
++// testes das correcoes de bugs: datas validas, texto so com espacos, erros de chave
+ // estrangeira traduzidos para regra de negocio e reserva em data passada.
+ #include <functional>
+ #include <iostream>
+@@ -17,8 +17,10 @@
+ 
+ namespace {
+ 
++// conta quantos testes falharam, no fim o main devolve 1 se for maior que zero
+ int falhas = 0;
+ 
++// marca a falha e continua (nao para no primeiro erro)
+ void exigir(bool condicao, const std::string& mensagem) {
+     if (!condicao) {
+         std::cerr << "FALHOU: " << mensagem << "\n";
+@@ -44,6 +46,7 @@ void exigirErro(const std::function<void()>& acao, const std::string& mensagem)
+ 
+ }  // namespace
+ 
++// monta um banco em memoria com dados base e testa cada bug que foi corrigido
+ int main(int argc, char* argv[]) {
+     const std::string schema = argc > 1 ? argv[1] : "sql/schema.sql";
+     Database::instancia(":memory:", schema);
+diff --git a/tests/test_database_i02.cpp b/tests/test_database_i02.cpp
+index 56e8eaa..21f61ed 100644
+--- a/tests/test_database_i02.cpp
++++ b/tests/test_database_i02.cpp
+@@ -1,3 +1,4 @@
++// teste do Database: confere o singleton, as chaves estrangeiras ligadas, as 7 tabelas do schema e o ErroBanco
+ #include "infra/Database.h"
+ #include "infra/ErroCondominio.h"
+ 
+@@ -10,6 +11,7 @@
+ 
+ namespace {
+ 
++// roda um select que devolve um numero e le esse numero
+ int valorInteiro(sqlite3* conexao, const char* sql) {
+     sqlite3_stmt* comando = nullptr;
+     if (sqlite3_prepare_v2(conexao, sql, -1, &comando, nullptr) != SQLITE_OK) {
+diff --git a/tests/test_fabrica_pessoa_real_i06.cpp b/tests/test_fabrica_pessoa_real_i06.cpp
+index 1a2ee90..8dca2ae 100644
+--- a/tests/test_fabrica_pessoa_real_i06.cpp
++++ b/tests/test_fabrica_pessoa_real_i06.cpp
+@@ -1,3 +1,4 @@
++// teste da FabricaPessoa com a classe Morador de verdade: confere se os dados chegam certos no objeto criado
+ #include "infra/FabricaPessoa.h"
+ #include "modelo/Morador.h"
+ 
+@@ -6,7 +7,7 @@
+ #include <string>
+ 
+ int main() {
+-    // Estes valores representam os campos que RepositorioPessoa le do SQLite.
++    // esses valores representam os campos que o RepositorioPessoa le do sqlite
+     const std::string tipoBanco = "morador";
+     const std::string nome = "Ana Souza";
+     const std::string cpf = "52998224725";
+diff --git a/tests/test_fabricas_i06.cpp b/tests/test_fabricas_i06.cpp
+index 9aca34d..6c10bd3 100644
+--- a/tests/test_fabricas_i06.cpp
++++ b/tests/test_fabricas_i06.cpp
+@@ -1,8 +1,9 @@
++// teste das fabricas com classes falsas minimas: cada tipo cria a subclasse certa, tipo desconhecido ou repetido da erro
+ #include <memory>
+ #include <stdexcept>
+ #include <string>
+ 
+-// Modelos minimos para testar a selecao sem alterar as classes da equipe.
++// modelos minimos pra testar a selecao sem alterar as classes da equipe
+ class Pessoa {
+ public:
+     virtual ~Pessoa() = default;
+@@ -48,6 +49,7 @@ public:
+ #include "infra/FabricaAreaComum.h"
+ #include "infra/FabricaPessoa.h"
+ 
++// joga excecao se a condicao for falsa, e assim que o teste falha
+ void exigir(bool condicao, const char* mensagem) {
+     if (!condicao) {
+         throw std::runtime_error(mensagem);
+diff --git a/tests/test_gui_fluxos.cpp b/tests/test_gui_fluxos.cpp
+index 60b4961..d702d65 100644
+--- a/tests/test_gui_fluxos.cpp
++++ b/tests/test_gui_fluxos.cpp
+@@ -1,3 +1,4 @@
++// teste dos fluxos da interface qt: aciona os botoes reais das telas (plugin offscreen) com banco em memoria
+ #include "infra/Database.h"
+ #include "interface/MenuPrincipal.h"
+ #include "interface/TelaMoradores.h"
+@@ -28,6 +29,7 @@
+ 
+ namespace {
+ 
++// joga excecao se a condicao for falsa, e assim que o teste falha
+ void exigir(bool condicao, const char* mensagem) {
+     if (!condicao) throw std::runtime_error(mensagem);
+ }
+@@ -39,6 +41,7 @@ T* achar(QWidget* raiz, const char* nome) {
+     return encontrado;
+ }
+ 
++// escolhe no combo o item que guarda aquele id
+ void selecionar(QComboBox* combo, int id) {
+     const int indice = combo->findData(id);
+     exigir(indice >= 0, "ID nao apareceu no formulario");
+diff --git a/tests/test_integracao_pessoas_i06.cpp b/tests/test_integracao_pessoas_i06.cpp
+index 140e1b5..644ba76 100644
+--- a/tests/test_integracao_pessoas_i06.cpp
++++ b/tests/test_integracao_pessoas_i06.cpp
+@@ -1,3 +1,4 @@
++// teste de integracao do RepositorioPessoa: grava e le morador, visitante e funcionario (a fabrica devolve a subclasse certa)
+ #include "infra/Database.h"
+ #include "modelo/Apartamento.h"
+ #include "modelo/Funcionario.h"
+@@ -12,6 +13,7 @@
+ 
+ namespace {
+ 
++// joga excecao se a condicao for falsa, e assim que o teste falha
+ void exigir(bool condicao, const char* mensagem) {
+     if (!condicao) {
+         throw std::runtime_error(mensagem);
+@@ -25,7 +27,7 @@ int main(int argc, char* argv[]) {
+         throw std::invalid_argument("Informe o caminho de sql/schema.sql");
+     }
+ 
+-    // Banco em memoria: o teste nao altera o banco usado pela aplicacao.
++    // banco em memoria: o teste nao altera o banco usado pela aplicacao
+     Database::instancia(":memory:", argv[1]);
+     RepositorioApartamento apartamentos;
+     RepositorioPessoa pessoas;
+diff --git a/tests/test_integracao_visitas.cpp b/tests/test_integracao_visitas.cpp
+index 036ab07..357757b 100644
+--- a/tests/test_integracao_visitas.cpp
++++ b/tests/test_integracao_visitas.cpp
+@@ -1,3 +1,4 @@
++// teste de integracao do RepositorioVisita: grava, le, registra saida e remove uma visita
+ #include "infra/Database.h"
+ #include "modelo/Apartamento.h"
+ #include "modelo/Funcionario.h"
+@@ -12,6 +13,7 @@
+ 
+ namespace {
+ 
++// joga excecao se a condicao for falsa, e assim que o teste falha
+ void exigir(bool condicao, const char* mensagem) {
+     if (!condicao) throw std::runtime_error(mensagem);
+ }
+@@ -21,7 +23,7 @@ void exigir(bool condicao, const char* mensagem) {
+ int main(int argc, char* argv[]) {
+     if (argc != 2) throw std::invalid_argument("Informe o caminho de sql/schema.sql");
+ 
+-    // Um banco em memoria permite verificar as relacoes sem alterar dados reais.
++    // um banco em memoria permite verificar as relacoes sem alterar dados reais
+     Database::instancia(":memory:", argv[1]);
+     RepositorioApartamento apartamentos;
+     RepositorioPessoa pessoas;
+diff --git a/tests/test_irepositorio_i04.cpp b/tests/test_irepositorio_i04.cpp
+index 0168102..3db725e 100644
+--- a/tests/test_irepositorio_i04.cpp
++++ b/tests/test_irepositorio_i04.cpp
+@@ -1,3 +1,4 @@
++// teste do contrato IRepositorio com um repositorio de exemplo que guarda tudo na memoria
+ #include "repositorio/IRepositorio.h"
+ 
+ #include <cassert>
+@@ -12,7 +13,7 @@ struct RegistroExemplo {
+     std::string nome;
+ };
+ 
+-// Exemplo pequeno de implementacao do contrato; os repositorios reais usarao SQLite.
++// exemplo pequeno de implementacao do contrato, os repositorios reais usam sqlite
+ class RepositorioExemplo final : public IRepositorio<RegistroExemplo> {
+ public:
+     int inserir(const RegistroExemplo& entidade) override {
+diff --git a/tests/test_modelos_areas_reservas.cpp b/tests/test_modelos_areas_reservas.cpp
+index b6335bd..07be4ab 100644
+--- a/tests/test_modelos_areas_reservas.cpp
++++ b/tests/test_modelos_areas_reservas.cpp
+@@ -1,3 +1,4 @@
++// teste dos modelos: taxa e regras de cada area comum, e as validacoes da Reserva (data e periodo)
+ #include "infra/ErroCondominio.h"
+ #include "modelo/Churrasqueira.h"
+ #include "modelo/Piscina.h"
+@@ -8,6 +9,7 @@
+ 
+ namespace {
+ 
++// joga excecao se a condicao for falsa, e assim que o teste falha
+ void exigir(bool condicao, const char* mensagem) {
+     if (!condicao) throw std::runtime_error(mensagem);
+ }
+diff --git a/tests/test_repositorios_areas_reservas.cpp b/tests/test_repositorios_areas_reservas.cpp
+index b3e4d4b..d4a2e38 100644
+--- a/tests/test_repositorios_areas_reservas.cpp
++++ b/tests/test_repositorios_areas_reservas.cpp
+@@ -1,3 +1,4 @@
++// teste dos repositorios de area comum e de reserva no sqlite (a fabrica reconstroi a subclasse certa)
+ #include "infra/Database.h"
+ #include "infra/ErroCondominio.h"
+ #include "modelo/Churrasqueira.h"
+@@ -10,6 +11,7 @@
+ #include <stdexcept>
+ 
+ namespace {
++// joga excecao se a condicao for falsa, e assim que o teste falha
+ void exigir(bool ok, const char* mensagem) {
+     if (!ok) throw std::runtime_error(mensagem);
+ }
+diff --git a/tests/test_servicos_areas_reservas.cpp b/tests/test_servicos_areas_reservas.cpp
+index 44e3672..3a13a08 100644
+--- a/tests/test_servicos_areas_reservas.cpp
++++ b/tests/test_servicos_areas_reservas.cpp
+@@ -1,3 +1,4 @@
++// teste dos services de area comum e de reserva: conflito de horario (RN01), valor e cancelamento com 24 horas
+ #include "infra/Database.h"
+ #include "infra/ErroCondominio.h"
+ #include "repositorio/RepositorioAreaComum.h"
+@@ -11,6 +12,7 @@
+ #include <stdexcept>
+ 
+ namespace {
++// joga excecao se a condicao for falsa, e assim que o teste falha
+ void exigir(bool ok, const char* mensagem) {
+     if (!ok) throw std::runtime_error(mensagem);
+ }
+@@ -23,6 +25,7 @@ void exigirRegra(Acao acao, const char* mensagem) {
+     exigir(rejeitada, mensagem);
+ }
+ 
++// devolve um horario fixo em maio de 2030, assim o resultado nao depende do dia em que o teste roda
+ std::chrono::system_clock::time_point horarioFixo(int dia, int hora) {
+     std::tm data{};
+     data.tm_year = 2030 - 1900;
+diff --git a/tests/test_servicos_pessoas_p05.cpp b/tests/test_servicos_pessoas_p05.cpp
+index acc8a01..8cc1cf8 100644
+--- a/tests/test_servicos_pessoas_p05.cpp
++++ b/tests/test_servicos_pessoas_p05.cpp
+@@ -1,3 +1,4 @@
++// teste dos services de apartamento, morador e funcionario: cadastro, listagem, cpf duplicado e apartamento ocupado
+ #include "infra/Database.h"
+ #include "infra/ErroCondominio.h"
+ #include "repositorio/RepositorioApartamento.h"
+@@ -10,6 +11,7 @@
+ 
+ namespace {
+ 
++// joga excecao se a condicao for falsa, e assim que o teste falha
+ void exigir(bool condicao, const char* mensagem) {
+     if (!condicao) throw std::runtime_error(mensagem);
+ }
+@@ -19,7 +21,7 @@ void exigir(bool condicao, const char* mensagem) {
+ int main(int argc, char* argv[]) {
+     if (argc != 2) throw std::invalid_argument("Informe o caminho de sql/schema.sql");
+ 
+-    // O banco existe apenas durante este teste.
++    // o banco existe so durante este teste
+     Database::instancia(":memory:", argv[1]);
+     RepositorioApartamento repoApartamentos;
+     RepositorioPessoa repoPessoas;
