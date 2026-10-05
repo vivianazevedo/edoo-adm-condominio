@@ -7,6 +7,7 @@ class MenuVisitas {
 private:
     VisitaService& visitaService_;
 
+    // uma funcao pra cada opcao do menu
     void cadastrarVisitante();
     void registrarEntrada();
     void registrarSaida();
@@ -14,6 +15,7 @@ private:
     void historicoPorApartamento();
 
 public:
+    // recebe o service por referencia (o menu nao cria nada, so usa)
     explicit MenuVisitas(VisitaService& visitaService);
 
     // mostra o menu ate a pessoa escolher voltar

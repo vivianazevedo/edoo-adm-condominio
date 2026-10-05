@@ -54,12 +54,14 @@ void executar(const function<void()>& acao) {
     }
 }
 
+// converte o enum em texto pra mostrar no menu
 string ocupacaoParaTexto(TipoOcupacao ocupacao) {
     if (ocupacao == TipoOcupacao::Proprietario) return "Proprietario";
     if (ocupacao == TipoOcupacao::Inquilino) return "Inquilino";
     return "Dependente";
 }
 
+// converte o enum em texto pra mostrar no menu
 string cargoParaTexto(Cargo cargo) {
     if (cargo == Cargo::Porteiro) return "Porteiro";
     if (cargo == Cargo::Zelador) return "Zelador";
@@ -98,6 +100,8 @@ Cargo lerCargo() {
     }
 }
 
+// imprime uma linha com os dados do morador
+// o dynamic_cast pega os campos que so o Morador tem
 void imprimirMorador(const Pessoa& pessoa) {
     cout << "ID " << pessoa.id() << " | " << pessoa.nome()
          << " | CPF " << pessoa.cpf() << " | Tel " << pessoa.telefone();
@@ -110,6 +114,7 @@ void imprimirMorador(const Pessoa& pessoa) {
     cout << "\n";
 }
 
+// imprime uma linha com os dados do funcionario (dynamic_cast, igual ao do morador)
 void imprimirFuncionario(const Pessoa& pessoa) {
     cout << "ID " << pessoa.id() << " | " << pessoa.nome()
          << " | CPF " << pessoa.cpf() << " | Tel " << pessoa.telefone();
@@ -124,6 +129,7 @@ void imprimirFuncionario(const Pessoa& pessoa) {
 
 }  // namespace
 
+// guarda as referencias dos services
 MenuMoradores::MenuMoradores(ApartamentoService& apartamentoService,
                              MoradorService& moradorService,
                              FuncionarioService& funcionarioService)
@@ -131,6 +137,7 @@ MenuMoradores::MenuMoradores(ApartamentoService& apartamentoService,
       moradorService_(moradorService),
       funcionarioService_(funcionarioService) {}
 
+// menu do modulo: repete ate a pessoa escolher 0 (voltar)
 void MenuMoradores::exibirMenu() {
     int opcao = -1;
     while (opcao != 0) {
@@ -153,6 +160,8 @@ void MenuMoradores::exibirMenu() {
     }
 }
 
+// submenu de apartamentos
+// cada opcao roda dentro do executar(), assim o erro aparece na tela e o programa nao fecha
 void MenuMoradores::menuApartamentos() {
     int opcao = -1;
     while (opcao != 0) {
@@ -175,6 +184,7 @@ void MenuMoradores::menuApartamentos() {
     }
 }
 
+// submenu de moradores (mesma ideia do de apartamentos)
 void MenuMoradores::menuMoradores() {
     int opcao = -1;
     while (opcao != 0) {
@@ -199,6 +209,7 @@ void MenuMoradores::menuMoradores() {
     }
 }
 
+// submenu de funcionarios (mesma ideia)
 void MenuMoradores::menuFuncionarios() {
     int opcao = -1;
     while (opcao != 0) {
@@ -223,6 +234,7 @@ void MenuMoradores::menuFuncionarios() {
 
 // ---------- apartamentos ----------
 
+// pede os dados e chama o service pra cadastrar
 void MenuMoradores::cadastrarApartamento() {
     cout << "\n--- Novo apartamento ---\n";
     string bloco = lerLinha("Bloco: ");
@@ -233,6 +245,7 @@ void MenuMoradores::cadastrarApartamento() {
     cout << "Apartamento cadastrado! ID: " << id << "\n";
 }
 
+// lista todos (ou avisa que nao tem nenhum)
 void MenuMoradores::listarApartamentos() {
     auto apartamentos = apartamentoService_.listar();
     cout << "\n--- Apartamentos cadastrados ---\n";
@@ -245,6 +258,7 @@ void MenuMoradores::listarApartamentos() {
     }
 }
 
+// pede o id e os dados novos e chama o service pra editar
 void MenuMoradores::editarApartamento() {
     cout << "\n--- Editar apartamento ---\n";
     int id = lerInteiro("ID do apartamento: ");
@@ -256,6 +270,7 @@ void MenuMoradores::editarApartamento() {
     cout << "Apartamento atualizado!\n";
 }
 
+// pede o id e chama o service pra remover
 void MenuMoradores::removerApartamento() {
     cout << "\n--- Remover apartamento ---\n";
     int id = lerInteiro("ID do apartamento: ");
@@ -266,6 +281,7 @@ void MenuMoradores::removerApartamento() {
 
 // ---------- moradores ----------
 
+// pede os dados e chama o service pra cadastrar
 void MenuMoradores::cadastrarMorador() {
     cout << "\n--- Novo morador ---\n";
     string nome = lerLinha("Nome: ");
@@ -279,6 +295,7 @@ void MenuMoradores::cadastrarMorador() {
     cout << "Morador cadastrado! ID: " << id << "\n";
 }
 
+// lista todos (ou avisa que nao tem nenhum)
 void MenuMoradores::listarMoradores() {
     auto moradores = moradorService_.listar();
     cout << "\n--- Moradores cadastrados ---\n";
@@ -291,6 +308,7 @@ void MenuMoradores::listarMoradores() {
     }
 }
 
+// pede o id do apartamento e lista so os moradores dele
 void MenuMoradores::listarMoradoresPorApartamento() {
     cout << "\n--- Moradores por apartamento ---\n";
     int apartamentoId = lerInteiro("ID do apartamento: ");
@@ -305,6 +323,7 @@ void MenuMoradores::listarMoradoresPorApartamento() {
     }
 }
 
+// pede o id e os dados novos e chama o service pra editar
 void MenuMoradores::editarMorador() {
     cout << "\n--- Editar morador ---\n";
     int id = lerInteiro("ID do morador: ");
@@ -319,6 +338,7 @@ void MenuMoradores::editarMorador() {
     cout << "Morador atualizado!\n";
 }
 
+// pede o id e chama o service pra remover
 void MenuMoradores::removerMorador() {
     cout << "\n--- Remover morador ---\n";
     int id = lerInteiro("ID do morador: ");
@@ -329,6 +349,7 @@ void MenuMoradores::removerMorador() {
 
 // ---------- funcionarios ----------
 
+// pede os dados e chama o service pra cadastrar
 void MenuMoradores::cadastrarFuncionario() {
     cout << "\n--- Novo funcionario ---\n";
     string nome = lerLinha("Nome: ");
@@ -342,6 +363,7 @@ void MenuMoradores::cadastrarFuncionario() {
     cout << "Funcionario cadastrado! ID: " << id << "\n";
 }
 
+// lista todos (ou avisa que nao tem nenhum)
 void MenuMoradores::listarFuncionarios() {
     auto funcionarios = funcionarioService_.listar();
     cout << "\n--- Funcionarios cadastrados ---\n";
@@ -354,6 +376,7 @@ void MenuMoradores::listarFuncionarios() {
     }
 }
 
+// pede o id e os dados novos e chama o service pra editar
 void MenuMoradores::editarFuncionario() {
     cout << "\n--- Editar funcionario ---\n";
     int id = lerInteiro("ID do funcionario: ");
@@ -368,6 +391,7 @@ void MenuMoradores::editarFuncionario() {
     cout << "Funcionario atualizado!\n";
 }
 
+// pede o id e chama o service pra remover
 void MenuMoradores::removerFuncionario() {
     cout << "\n--- Remover funcionario ---\n";
     int id = lerInteiro("ID do funcionario: ");

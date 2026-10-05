@@ -1,8 +1,9 @@
+// teste das fabricas com classes falsas minimas: cada tipo cria a subclasse certa, tipo desconhecido ou repetido da erro
 #include <memory>
 #include <stdexcept>
 #include <string>
 
-// Modelos minimos para testar a selecao sem alterar as classes da equipe.
+// modelos minimos pra testar a selecao sem alterar as classes da equipe
 class Pessoa {
 public:
     virtual ~Pessoa() = default;
@@ -48,6 +49,7 @@ public:
 #include "infra/FabricaAreaComum.h"
 #include "infra/FabricaPessoa.h"
 
+// joga excecao se a condicao for falsa, e assim que o teste falha
 void exigir(bool condicao, const char* mensagem) {
     if (!condicao) {
         throw std::runtime_error(mensagem);

@@ -14,7 +14,7 @@ void garantirApartamento(IRepositorio<Apartamento>& repo, int apartamentoId) {
     }
 }
 
-// RN07: o cpf tem que ser unico entre todas as pessoas (morador, funcionario e visitante)
+// rn07: o cpf tem que ser unico entre todas as pessoas (morador, funcionario e visitante)
 // ignorarId e o id da propria pessoa na edicao (0 no cadastro)
 bool cpfEmUso(IRepositorio<Pessoa>& repo, const string& cpf, int ignorarId) {
     for (const auto& pessoa : repo.listar()) {
@@ -35,9 +35,11 @@ void garantirMorador(IRepositorio<Pessoa>& repo, int id) {
 
 }  // namespace
 
+// guarda as referencias dos dois repositorios
 MoradorService::MoradorService(IRepositorio<Pessoa>& repoPessoa, IRepositorio<Apartamento>& repoApto)
     : repoPessoa_(repoPessoa), repoApto_(repoApto) {}
 
+// valida pelo construtor, ve se o apartamento existe, ve se o cpf ja existe (RN07) e salva
 int MoradorService::cadastrar(const string& nome, const string& cpf, const string& telefone,
                               int apartamentoId, TipoOcupacao tipoOcupacao,
                               const string& dataEntrada) {
@@ -52,6 +54,7 @@ int MoradorService::cadastrar(const string& nome, const string& cpf, const strin
     return repoPessoa_.inserir(novo);
 }
 
+// pega todas as pessoas e fica so com os moradores (dynamic_cast)
 vector<unique_ptr<Pessoa>> MoradorService::listar() {
     vector<unique_ptr<Pessoa>> moradores;
     for (auto& pessoa : repoPessoa_.listar()) {
@@ -62,6 +65,7 @@ vector<unique_ptr<Pessoa>> MoradorService::listar() {
     return moradores;
 }
 
+// so os moradores daquele apartamento (antes confere se o apartamento existe)
 vector<unique_ptr<Pessoa>> MoradorService::listarPorApartamento(int apartamentoId) {
     garantirApartamento(repoApto_, apartamentoId);
 
@@ -75,6 +79,7 @@ vector<unique_ptr<Pessoa>> MoradorService::listarPorApartamento(int apartamentoI
     return moradores;
 }
 
+// confere que e um morador, valida os dados novos, o apartamento e o cpf
 void MoradorService::editar(int id, const string& nome, const string& cpf,
                             const string& telefone, int apartamentoId,
                             TipoOcupacao tipoOcupacao, const string& dataEntrada) {
@@ -92,10 +97,11 @@ void MoradorService::editar(int id, const string& nome, const string& cpf,
     }
 }
 
+// confere que e um morador e tenta remover
 void MoradorService::remover(int id) {
     garantirMorador(repoPessoa_, id);
 
-    // RN08: o banco recusa apagar morador que tem reserva (chave estrangeira)
+    // rn08: o banco recusa apagar morador que tem reserva (chave estrangeira)
     // se o erro for esse, avisa com uma mensagem de regra de negocio
     try {
         if (!repoPessoa_.remover(id)) {

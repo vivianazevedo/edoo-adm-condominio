@@ -3,10 +3,11 @@
 #include <exception> 
 
 
-class ErroCondominio : public std::exception { // classe herda publicamente da bibilioteca 
+class ErroCondominio : public std::exception { // classe base de todos os erros do sistema, herda de exception da biblioteca padrao 
 
     private:
 
+        // o texto do erro
         std::string mensagem_; 
 
     public: 
@@ -16,7 +17,7 @@ class ErroCondominio : public std::exception { // classe herda publicamente da b
 
 };
 
-class ErroValidacao : public ErroCondominio { // erro de CPF invalido
+class ErroValidacao : public ErroCondominio { // dado invalido (cpf errado, campo vazio, data fora do formato...)
 
     public:
         explicit ErroValidacao (const std::string& mensagem); //construtor 
@@ -24,7 +25,7 @@ class ErroValidacao : public ErroCondominio { // erro de CPF invalido
 };
 
 
-class ErroRegraNegocio : public ErroCondominio { //regra de negocio invalidada
+class ErroRegraNegocio : public ErroCondominio { // uma regra de negocio foi quebrada (ex: reserva em horario ocupado)
 
     public:
         explicit ErroRegraNegocio (const std::string& mensagem); // construtor 
@@ -32,6 +33,7 @@ class ErroRegraNegocio : public ErroCondominio { //regra de negocio invalidada
 };
 
 
+// erro que vem do sqlite (falha ao abrir, preparar ou rodar um sql)
 class ErroBanco : public ErroCondominio {
 
     public:

@@ -4,9 +4,10 @@
 
 
 
-enum class Cargo { Porteiro, Zelador, Faxineiro, Administrador }; //cargo do funcionario 
+enum class Cargo { Porteiro, Zelador, Faxineiro, Administrador }; // cargos possiveis
 
 
+// funcionario do condominio, herda de Pessoa (o cargo e um atributo, so o Porteiro registra visitas)
 class Funcionario : public Pessoa {
 
 
@@ -24,9 +25,10 @@ class Funcionario : public Pessoa {
         const std::string& turno() const { return turno_; }
         const std::string& dataAdmissao() const { return dataAdmissao_; }
 
-        bool ehPorteiro() const { return cargo_ == Cargo::Porteiro; }// retorna true s for porteiro 
+        bool ehPorteiro() const { return cargo_ == Cargo::Porteiro; }// true se o cargo for porteiro
 
         void setCargo(Cargo cargo) { cargo_ = cargo; }
+        // turno e data passam pelas validacoes da Pessoa
         void setTurno(const std::string& turno);
         void setDataAdmissao(const std::string& dataAdmissao);
 

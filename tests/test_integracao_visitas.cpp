@@ -1,3 +1,4 @@
+// teste de integracao do RepositorioVisita: grava, le, registra saida e remove uma visita
 #include "infra/Database.h"
 #include "modelo/Apartamento.h"
 #include "modelo/Funcionario.h"
@@ -12,6 +13,7 @@
 
 namespace {
 
+// joga excecao se a condicao for falsa, e assim que o teste falha
 void exigir(bool condicao, const char* mensagem) {
     if (!condicao) throw std::runtime_error(mensagem);
 }
@@ -21,7 +23,7 @@ void exigir(bool condicao, const char* mensagem) {
 int main(int argc, char* argv[]) {
     if (argc != 2) throw std::invalid_argument("Informe o caminho de sql/schema.sql");
 
-    // Um banco em memoria permite verificar as relacoes sem alterar dados reais.
+    // um banco em memoria permite verificar as relacoes sem alterar dados reais
     Database::instancia(":memory:", argv[1]);
     RepositorioApartamento apartamentos;
     RepositorioPessoa pessoas;

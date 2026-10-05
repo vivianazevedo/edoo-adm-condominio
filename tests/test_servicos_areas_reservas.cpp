@@ -1,3 +1,4 @@
+// teste dos services de area comum e de reserva: conflito de horario (RN01), valor e cancelamento com 24 horas
 #include "infra/Database.h"
 #include "infra/ErroCondominio.h"
 #include "repositorio/RepositorioAreaComum.h"
@@ -11,6 +12,7 @@
 #include <stdexcept>
 
 namespace {
+// joga excecao se a condicao for falsa, e assim que o teste falha
 void exigir(bool ok, const char* mensagem) {
     if (!ok) throw std::runtime_error(mensagem);
 }
@@ -23,6 +25,7 @@ void exigirRegra(Acao acao, const char* mensagem) {
     exigir(rejeitada, mensagem);
 }
 
+// devolve um horario fixo em maio de 2030, assim o resultado nao depende do dia em que o teste roda
 std::chrono::system_clock::time_point horarioFixo(int dia, int hora) {
     std::tm data{};
     data.tm_year = 2030 - 1900;

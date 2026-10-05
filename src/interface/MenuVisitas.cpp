@@ -64,8 +64,11 @@ void imprimirVisitas(const std::vector<std::unique_ptr<Visita>>& visitas) {
 
 }  // namespace
 
+// guarda a referencia do service
 MenuVisitas::MenuVisitas(VisitaService& visitaService) : visitaService_(visitaService) {}
 
+// menu da portaria: repete ate a pessoa escolher 0 (voltar)
+// cada opcao roda dentro do executar(), assim o erro aparece na tela e o programa nao fecha
 void MenuVisitas::exibirMenu() {
     int opcao = -1;
     while (opcao != 0) {
@@ -92,6 +95,7 @@ void MenuVisitas::exibirMenu() {
     }
 }
 
+// pede os dados e chama o service pra cadastrar o visitante
 void MenuVisitas::cadastrarVisitante() {
     std::cout << "\n--- Novo visitante ---\n";
     std::string nome = lerLinha("Nome: ");
@@ -101,6 +105,7 @@ void MenuVisitas::cadastrarVisitante() {
     std::cout << "Visitante cadastrado! ID: " << id << "\n";
 }
 
+// pede os ids e chama o service, as regras da portaria (so porteiro) estao la dentro
 void MenuVisitas::registrarEntrada() {
     std::cout << "\n--- Registrar entrada ---\n";
     int visitanteId = lerInteiro("ID do visitante: ");
@@ -110,6 +115,7 @@ void MenuVisitas::registrarEntrada() {
     std::cout << "Entrada registrada! ID da visita: " << id << "\n";
 }
 
+// pede o id da visita e chama o service pra registrar a saida
 void MenuVisitas::registrarSaida() {
     std::cout << "\n--- Registrar saida ---\n";
     int visitaId = lerInteiro("ID da visita: ");
@@ -117,11 +123,13 @@ void MenuVisitas::registrarSaida() {
     std::cout << "Saida registrada!\n";
 }
 
+// mostra so as visitas que ainda nao tem saida
 void MenuVisitas::listarAbertas() {
     std::cout << "\n--- Visitas em aberto ---\n";
     imprimirVisitas(visitaService_.listarAbertas());
 }
 
+// pede o id do apartamento e mostra todas as visitas dele
 void MenuVisitas::historicoPorApartamento() {
     std::cout << "\n--- Historico por apartamento ---\n";
     int apartamentoId = lerInteiro("ID do apartamento: ");

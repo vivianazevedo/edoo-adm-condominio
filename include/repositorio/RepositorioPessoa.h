@@ -10,6 +10,7 @@
 // morador -> tabela morador, funcionario -> tabela funcionario, visitante so usa pessoa
 class RepositorioPessoa : public IRepositorio<Pessoa> {
 public:
+    // os cinco metodos do CRUD da IRepositorio, escritos com sql no .cpp
     int inserir(const Pessoa& pessoa) override;
     std::unique_ptr<Pessoa> buscarPorId(int id) override;
     std::vector<std::unique_ptr<Pessoa>> listar() override;

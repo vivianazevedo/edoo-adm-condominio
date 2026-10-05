@@ -10,6 +10,7 @@
 // isso e regra de negocio e fica no service (o banco so garante que os ids existem)
 class RepositorioVisita : public IRepositorio<Visita> {
 public:
+    // os cinco metodos do CRUD da IRepositorio, escritos com sql no .cpp
     int inserir(const Visita& visita) override;
     std::unique_ptr<Visita> buscarPorId(int id) override;
     std::vector<std::unique_ptr<Visita>> listar() override;

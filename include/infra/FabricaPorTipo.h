@@ -7,14 +7,15 @@
 #include <unordered_map>
 #include <utility>
 
-// Seleciona um construtor registrado pelo discriminador salvo no banco.
-// Base pode ser abstrata; a entidade concreta e construida pelo modulo dono.
+// fabrica generica: guarda uma funcao que cria cada tipo, escolhida pelo texto salvo no banco (padrao factory)
+// a classe Base pode ser abstrata (ex: Pessoa), quem cria o objeto de verdade e cada subclasse
 template <typename Base>
 class FabricaPorTipo {
 public:
+    // o tipo Criador e uma funcao sem parametros que devolve um objeto novo (unique_ptr)
     using Criador = std::function<std::unique_ptr<Base>()>;
 
-    // Cria a subclasse correspondente ou rejeita um tipo desconhecido.
+    // procura o tipo no mapa e chama a funcao criadora, se o tipo nao existir joga erro
     std::unique_ptr<Base> criar(const std::string& tipo) const {
         const auto encontrado = criadores_.find(tipo);
         if (encontrado == criadores_.end()) {
@@ -28,7 +29,7 @@ public:
     }
 
 protected:
-    // Registra um construtor para um dos tipos permitidos pela fabrica concreta.
+    // guarda a funcao criadora de um tipo (protected: so as fabricas filhas chamam), nao aceita tipo repetido
     void registrar(const std::string& tipo, Criador criador) {
         if (!criador) {
             throw std::invalid_argument("Criador vazio: " + tipo);
@@ -40,5 +41,6 @@ protected:
     }
 
 private:
+    // mapa: texto do tipo -> funcao que cria ele
     std::unordered_map<std::string, Criador> criadores_;
 };

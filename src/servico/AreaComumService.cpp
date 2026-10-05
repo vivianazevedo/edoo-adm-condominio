@@ -9,14 +9,17 @@
 #include <memory>
 #include <utility>
 
+// versao padrao: usa o repositorio do sqlite
 AreaComumService::AreaComumService()
     : repo_(std::make_shared<RepositorioAreaComum>()) {}
 
+// versao que recebe o repositorio, joga ErroValidacao se vier vazio
 AreaComumService::AreaComumService(std::shared_ptr<IRepositorioAreaComum> repo)
     : repo_(std::move(repo)) {
     if (!repo_) throw ErroValidacao("Repositorio de areas nao informado");
 }
 
+// escolhe a subclasse pelo texto do tipo, se for um tipo desconhecido joga ErroValidacao
 int AreaComumService::cadastrar(const std::string& tipo, const std::string& nome,
                                 int capacidade, double taxaBase,
                                 const std::string& abertura,
@@ -36,10 +39,13 @@ int AreaComumService::cadastrar(const std::string& tipo, const std::string& nome
     throw ErroValidacao("Tipo de area comum desconhecido: " + tipo);
 }
 
+// so repassa pro repositorio
 std::vector<std::unique_ptr<AreaComum>> AreaComumService::listar() {
     return repo_->listar();
 }
 
+// busca a area atual pra manter o tipo e os horarios, e recria o objeto com os dados novos
+// devolve false se o id nao existe
 bool AreaComumService::editar(int id, const std::string& nome, int capacidade,
                               double taxaBase) {
     auto atual = repo_->buscarPorId(id);
@@ -62,6 +68,7 @@ bool AreaComumService::editar(int id, const std::string& nome, int capacidade,
     throw ErroBanco("Tipo de area comum desconhecido: " + tipo);
 }
 
+// tenta remover, se o banco recusar por chave estrangeira (area com reserva) vira ErroRegraNegocio
 bool AreaComumService::remover(int id) {
     // o banco recusa apagar area que tem reserva (chave estrangeira); avisa com regra de negocio
     try {

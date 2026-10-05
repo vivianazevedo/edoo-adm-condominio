@@ -6,6 +6,7 @@
 
 enum class TipoOcupacao { Proprietario, Inquilino, Dependente}; //forma de ocupacao
 
+// morador do condominio, herda de Pessoa e fica ligado a um apartamento pelo id
 class Morador : public Pessoa {
 
     private:

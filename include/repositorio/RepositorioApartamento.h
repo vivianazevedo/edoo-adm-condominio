@@ -9,6 +9,7 @@
 // nao carrega os moradores, quem liga eles ao apartamento e o service
 class RepositorioApartamento : public IRepositorio<Apartamento> {
 public:
+    // os cinco metodos do CRUD da IRepositorio, escritos com sql no .cpp
     int inserir(const Apartamento& apartamento) override;
     std::unique_ptr<Apartamento> buscarPorId(int id) override;
     std::vector<std::unique_ptr<Apartamento>> listar() override;

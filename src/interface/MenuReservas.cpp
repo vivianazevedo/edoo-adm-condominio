@@ -4,6 +4,7 @@
 
 namespace {
 
+// le uma linha, se a entrada acabar joga erro pro menu conseguir sair
 std::string lerTexto(const char* pergunta) {
     std::cout << pergunta;
     std::string valor;
@@ -11,6 +12,7 @@ std::string lerTexto(const char* pergunta) {
     return valor;
 }
 
+// repete a pergunta ate digitarem um numero inteiro valido
 int lerInteiro(const char* pergunta) {
     for (;;) {
         const std::string entrada = lerTexto(pergunta);
@@ -19,12 +21,13 @@ int lerInteiro(const char* pergunta) {
             const int valor = std::stoi(entrada, &usados);
             if (usados == entrada.size()) return valor;
         } catch (const std::exception&) {
-            // Repete a pergunta abaixo.
+            // nao faz nada aqui, a pergunta repete la embaixo
         }
         std::cout << "Numero invalido, tente novamente.\n";
     }
 }
 
+// repete a pergunta ate digitarem um numero decimal valido
 double lerDecimal(const char* pergunta) {
     for (;;) {
         const std::string entrada = lerTexto(pergunta);
@@ -33,7 +36,7 @@ double lerDecimal(const char* pergunta) {
             const double valor = std::stod(entrada, &usados);
             if (usados == entrada.size()) return valor;
         } catch (const std::exception&) {
-            // Repete a pergunta abaixo.
+            // nao faz nada aqui, a pergunta repete la embaixo
         }
         std::cout << "Valor invalido, tente novamente.\n";
     }
@@ -41,6 +44,7 @@ double lerDecimal(const char* pergunta) {
 
 }  // namespace
 
+// repete o menu ate escolher 0 ou a entrada acabar, erros aparecem na tela
 void MenuReservas::exibirMenu() {
     while (std::cin) {
         std::cout << "\n========================================\n";
@@ -70,6 +74,7 @@ void MenuReservas::exibirMenu() {
     }
 }
 
+// lista as areas cadastradas (ou avisa que nao tem nenhuma)
 void MenuReservas::listarAreas() {
     auto areas = areaService_.listar();
     std::cout << "\n--- Areas Comuns Cadastradas ---\n";
@@ -86,6 +91,7 @@ void MenuReservas::listarAreas() {
     }
 }
 
+// pede os dados da area e chama o service pra cadastrar
 void MenuReservas::cadastrarArea() {
     std::cout << "\n--- Nova Area Comum ---\n";
     const std::string tipo = lerTexto("Tipo (SalaoFestas, Piscina, Churrasqueira): ");
@@ -103,6 +109,7 @@ void MenuReservas::cadastrarArea() {
     }
 }
 
+// pede os dados e chama o service, as regras de reserva estao la dentro
 void MenuReservas::criarReserva() {
     std::cout << "\n--- Nova Reserva ---\n";
     const int moradorId = lerInteiro("ID do Morador: ");
@@ -120,6 +127,7 @@ void MenuReservas::criarReserva() {
     }
 }
 
+// pede o id do morador e lista as reservas dele
 void MenuReservas::listarMinhasReservas() {
     std::cout << "\n--- Reservas do Morador ---\n";
     const int moradorId = lerInteiro("ID do Morador: ");
@@ -138,6 +146,7 @@ void MenuReservas::listarMinhasReservas() {
     }
 }
 
+// pede o id da reserva e chama o service pra cancelar
 void MenuReservas::cancelarReserva() {
     std::cout << "\n--- Cancelar Reserva ---\n";
     const int reservaId = lerInteiro("ID da Reserva: ");

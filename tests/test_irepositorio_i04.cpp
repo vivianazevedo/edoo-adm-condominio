@@ -1,3 +1,4 @@
+// teste do contrato IRepositorio com um repositorio de exemplo que guarda tudo na memoria
 #include "repositorio/IRepositorio.h"
 
 #include <cassert>
@@ -12,7 +13,7 @@ struct RegistroExemplo {
     std::string nome;
 };
 
-// Exemplo pequeno de implementacao do contrato; os repositorios reais usarao SQLite.
+// exemplo pequeno de implementacao do contrato, os repositorios reais usam sqlite
 class RepositorioExemplo final : public IRepositorio<RegistroExemplo> {
 public:
     int inserir(const RegistroExemplo& entidade) override {

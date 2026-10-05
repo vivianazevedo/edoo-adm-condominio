@@ -7,7 +7,7 @@ using namespace std;  // permitido em .cpp (so e proibido nos .h)
 
 namespace {
 
-// RN07: o cpf tem que ser unico entre todas as pessoas (morador, funcionario e visitante)
+// rn07: o cpf tem que ser unico entre todas as pessoas (morador, funcionario e visitante)
 // ignorarId e o id da propria pessoa na edicao (0 no cadastro)
 bool cpfEmUso(IRepositorio<Pessoa>& repo, const string& cpf, int ignorarId) {
     for (const auto& pessoa : repo.listar()) {
@@ -28,9 +28,11 @@ void garantirFuncionario(IRepositorio<Pessoa>& repo, int id) {
 
 }  // namespace
 
+// guarda a referencia do repositorio
 FuncionarioService::FuncionarioService(IRepositorio<Pessoa>& repoPessoa)
     : repoPessoa_(repoPessoa) {}
 
+// valida pelo construtor, confere se o cpf ja existe (RN07) e salva
 int FuncionarioService::cadastrar(const string& nome, const string& cpf, const string& telefone,
                                   Cargo cargo, const string& turno, const string& dataAdmissao) {
     // o construtor valida nome, cpf, telefone, turno e data (ErroValidacao)
@@ -42,6 +44,7 @@ int FuncionarioService::cadastrar(const string& nome, const string& cpf, const s
     return repoPessoa_.inserir(novo);
 }
 
+// pega todas as pessoas e fica so com os funcionarios (dynamic_cast)
 vector<unique_ptr<Pessoa>> FuncionarioService::listar() {
     vector<unique_ptr<Pessoa>> funcionarios;
     for (auto& pessoa : repoPessoa_.listar()) {
@@ -52,6 +55,7 @@ vector<unique_ptr<Pessoa>> FuncionarioService::listar() {
     return funcionarios;
 }
 
+// confere que e um funcionario, valida os dados novos e ve se o cpf nao e de outra pessoa
 void FuncionarioService::editar(int id, const string& nome, const string& cpf,
                                 const string& telefone, Cargo cargo, const string& turno,
                                 const string& dataAdmissao) {
@@ -67,6 +71,7 @@ void FuncionarioService::editar(int id, const string& nome, const string& cpf,
     }
 }
 
+// confere que e um funcionario e tenta remover
 void FuncionarioService::remover(int id) {
     garantirFuncionario(repoPessoa_, id);
 

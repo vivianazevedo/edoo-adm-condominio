@@ -6,9 +6,12 @@
 #include "repositorio/IRepositorio.h"
 
 
+// regras de negocio dos apartamentos: nao deixa cadastrar bloco e numero repetidos
+// a tela e o menu so conversam com essa classe, nunca com o sql
 class ApartamentoService {
 
     private:
+        // referencia pro repositorio (a interface), assim da pra trocar a implementacao
         IRepositorio<Apartamento>& repo_;
         
     public:

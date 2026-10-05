@@ -1,3 +1,4 @@
+// teste dos fluxos da interface qt: aciona os botoes reais das telas (plugin offscreen) com banco em memoria
 #include "infra/Database.h"
 #include "interface/MenuPrincipal.h"
 #include "interface/TelaMoradores.h"
@@ -28,6 +29,7 @@
 
 namespace {
 
+// joga excecao se a condicao for falsa, e assim que o teste falha
 void exigir(bool condicao, const char* mensagem) {
     if (!condicao) throw std::runtime_error(mensagem);
 }
@@ -39,6 +41,7 @@ T* achar(QWidget* raiz, const char* nome) {
     return encontrado;
 }
 
+// escolhe no combo o item que guarda aquele id
 void selecionar(QComboBox* combo, int id) {
     const int indice = combo->findData(id);
     exigir(indice >= 0, "ID nao apareceu no formulario");

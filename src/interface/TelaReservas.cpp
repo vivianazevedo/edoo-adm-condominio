@@ -13,6 +13,7 @@
 
 namespace {
 
+// deixa a tabela no padrao: colunas, linha inteira selecionavel, uma por vez e sem editar a celula
 void prepararTabela(QTableWidget* tabela, const QStringList& colunas) {
     tabela->setColumnCount(colunas.size());
     tabela->setHorizontalHeaderLabels(colunas);
@@ -26,6 +27,7 @@ void prepararTabela(QTableWidget* tabela, const QStringList& colunas) {
 
 }  // namespace
 
+// monta a tela inteira e liga os botoes aos services
 TelaReservas::TelaReservas(QWidget* parent)
     : QWidget(parent), repoAreas_(std::make_shared<RepositorioAreaComum>()),
       repoReservas_(std::make_shared<RepositorioReserva>()), areas_(repoAreas_),
@@ -33,6 +35,7 @@ TelaReservas::TelaReservas(QWidget* parent)
     auto* pagina = new QWidget(this);
     auto* layout = new QVBoxLayout(pagina);
 
+    // parte das areas comuns: formulario, botoes e tabela
     auto* grupoAreas = new QGroupBox("Areas comuns", pagina);
     auto* layoutAreas = new QVBoxLayout(grupoAreas);
     auto* formularioArea = new QFormLayout;
@@ -53,6 +56,7 @@ TelaReservas::TelaReservas(QWidget* parent)
     fechamento_ = new QTimeEdit(QTime(23, 0), grupoAreas);
     abertura_->setDisplayFormat("HH:mm");
     fechamento_->setDisplayFormat("HH:mm");
+    // tipo, abertura e fechamento so valem no cadastro, na edicao o service so muda nome, capacidade e taxa
     formularioArea->addRow("Tipo (so no cadastro)", tipo_);
     formularioArea->addRow("Nome", nomeArea_);
     formularioArea->addRow("Capacidade", capacidade_);
@@ -77,11 +81,13 @@ TelaReservas::TelaReservas(QWidget* parent)
     layoutAreas->addWidget(tabelaAreas_);
     layout->addWidget(grupoAreas);
 
+    // parte das reservas: formulario, botoes e tabela
     auto* grupoReservas = new QGroupBox("Reservas", pagina);
     auto* layoutReservas = new QVBoxLayout(grupoReservas);
     auto* formularioReserva = new QFormLayout;
     morador_ = new QComboBox(grupoReservas);
     area_ = new QComboBox(grupoReservas);
+    // a data comeca daqui a 2 dias e nao deixa escolher um dia que ja passou (setMinimumDate)
     data_ = new QDateEdit(QDate::currentDate().addDays(2), grupoReservas);
     morador_->setObjectName("reservaMorador");
     area_->setObjectName("reservaArea");
@@ -121,12 +127,15 @@ TelaReservas::TelaReservas(QWidget* parent)
     layoutReservas->addWidget(tabelaReservas_);
     layout->addWidget(grupoReservas);
 
+    // poe tudo dentro de uma area com barra de rolagem
     auto* rolagem = new QScrollArea(this);
     rolagem->setWidgetResizable(true);
     rolagem->setWidget(pagina);
     auto* externo = new QVBoxLayout(this);
     externo->addWidget(rolagem);
 
+    // ligacao dos botoes (signal clicked) com as acoes
+    // o executarNaTela mostra uma janela com o erro se o service jogar excecao
     connect(cadastrarArea, &QPushButton::clicked, this, [this] {
         executarNaTela(this, [this] {
             areas_.cadastrar(tipo_->currentText().toStdString(),
@@ -149,6 +158,7 @@ TelaReservas::TelaReservas(QWidget* parent)
             atualizar();
         });
     });
+    // clicar numa area preenche o formulario com os dados dela
     connect(tabelaAreas_, &QTableWidget::cellClicked, this, [this](int linha, int) {
         const int id = tabelaAreas_->item(linha, 0)->text().toInt();
         auto selecionada = repoAreas_->buscarPorId(id);
@@ -161,6 +171,7 @@ TelaReservas::TelaReservas(QWidget* parent)
         fechamento_->setTime(QTime::fromString(QString::fromStdString(selecionada->getHoraFechamento()), "HH:mm"));
     });
 
+    // os combos de morador e area guardam o id, o currentData() devolve esse id
     connect(criarReserva, &QPushButton::clicked, this, [this] {
         executarNaTela(this, [this] {
             reservas_.criar(morador_->currentData().toInt(), area_->currentData().toInt(),
@@ -172,6 +183,7 @@ TelaReservas::TelaReservas(QWidget* parent)
     });
     connect(consultarReservas, &QPushButton::clicked, this,
             [this] { executarNaTela(this, [this] { atualizar(); }); });
+    // se o service devolver false (reserva nao existe) joga ErroRegraNegocio pra aparecer na janela
     connect(cancelarReserva, &QPushButton::clicked, this, [this] {
         executarNaTela(this, [this] {
             if (!reservas_.cancelar(idSelecionado(tabelaReservas_))) {
@@ -181,9 +193,11 @@ TelaReservas::TelaReservas(QWidget* parent)
         });
     });
 
+    // carrega os dados na primeira vez que a tela abre
     atualizar();
 }
 
+// recarrega a lista de moradores, as areas e as reservas com os dados do banco
 void TelaReservas::atualizar() {
     const auto pessoas = repoPessoas_.listar();
     morador_->clear();

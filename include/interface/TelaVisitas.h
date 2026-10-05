@@ -12,23 +12,28 @@
 #include <QTableWidget>
 #include <QWidget>
 
-// Cadastro de funcionarios/visitantes e controle de entrada e saida.
+// aba da portaria (qt): cadastra funcionarios e visitantes e controla entrada e saida das visitas
+// nunca mexe no sql, so chama os services
 class TelaVisitas : public QWidget {
     Q_OBJECT
 
 public:
     explicit TelaVisitas(QWidget* parent = nullptr);
+    // recarrega tudo com o que esta no banco
     void atualizar();
 
 private:
+    // recarrega so a tabela de visitas (respeitando o filtro de apartamento)
     void atualizarVisitas();
 
+    // repositorios e services da tela (o service recebe o repositorio por referencia)
     RepositorioPessoa repoPessoas_;
     RepositorioVisita repoVisitas_;
     RepositorioApartamento repoApartamentos_;
     FuncionarioService funcionarios_;
     VisitaService visitas_;
 
+    // campos dos formularios e tabelas, sao ponteiros e quem apaga eles e o qt
     QLineEdit* nomeFuncionario_ = nullptr;
     QLineEdit* cpfFuncionario_ = nullptr;
     QLineEdit* telefoneFuncionario_ = nullptr;

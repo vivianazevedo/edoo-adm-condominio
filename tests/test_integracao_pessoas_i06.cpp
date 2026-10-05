@@ -1,3 +1,4 @@
+// teste de integracao do RepositorioPessoa: grava e le morador, visitante e funcionario (a fabrica devolve a subclasse certa)
 #include "infra/Database.h"
 #include "modelo/Apartamento.h"
 #include "modelo/Funcionario.h"
@@ -12,6 +13,7 @@
 
 namespace {
 
+// joga excecao se a condicao for falsa, e assim que o teste falha
 void exigir(bool condicao, const char* mensagem) {
     if (!condicao) {
         throw std::runtime_error(mensagem);
@@ -25,7 +27,7 @@ int main(int argc, char* argv[]) {
         throw std::invalid_argument("Informe o caminho de sql/schema.sql");
     }
 
-    // Banco em memoria: o teste nao altera o banco usado pela aplicacao.
+    // banco em memoria: o teste nao altera o banco usado pela aplicacao
     Database::instancia(":memory:", argv[1]);
     RepositorioApartamento apartamentos;
     RepositorioPessoa pessoas;

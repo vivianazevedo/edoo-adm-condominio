@@ -1,3 +1,4 @@
+// teste da FabricaPessoa com a classe Morador de verdade: confere se os dados chegam certos no objeto criado
 #include "infra/FabricaPessoa.h"
 #include "modelo/Morador.h"
 
@@ -6,7 +7,7 @@
 #include <string>
 
 int main() {
-    // Estes valores representam os campos que RepositorioPessoa le do SQLite.
+    // esses valores representam os campos que o RepositorioPessoa le do sqlite
     const std::string tipoBanco = "morador";
     const std::string nome = "Ana Souza";
     const std::string cpf = "52998224725";

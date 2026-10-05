@@ -10,6 +10,8 @@
 
 namespace {
 
+// transforma a linha atual do banco na subclasse certa de AreaComum, usando a fabrica
+// as colunas vem na ordem do select: id, nome, tipo, capacidade, taxa, abertura, fechamento
 std::unique_ptr<AreaComum> montar(const SqliteComando& comando) {
     const int id = comando.inteiroEm(0);
     const std::string nome = comando.textoEm(1);
@@ -19,6 +21,7 @@ std::unique_ptr<AreaComum> montar(const SqliteComando& comando) {
     const std::string abertura = comando.textoEm(5);
     const std::string fechamento = comando.textoEm(6);
 
+    // uma fabrica nova por linha, cada criador monta o objeto com os dados que acabaram de ser lidos
     FabricaAreaComum fabrica;
     fabrica.registrarSalaoFestas([&] {
         return std::make_unique<SalaoFestas>(id, nome, capacidade, taxa,
@@ -37,6 +40,7 @@ std::unique_ptr<AreaComum> montar(const SqliteComando& comando) {
 
 }  // namespace
 
+// create: insere a area e devolve o id
 int RepositorioAreaComum::inserir(const AreaComum& entidade) {
     SqliteComando comando(
         "INSERT INTO area_comum (nome, tipo, capacidade, taxa_base, "
@@ -51,6 +55,7 @@ int RepositorioAreaComum::inserir(const AreaComum& entidade) {
     return comando.ultimoId();
 }
 
+// read: busca pelo id (nullptr se nao existir)
 std::unique_ptr<AreaComum> RepositorioAreaComum::buscarPorId(int id) {
     SqliteComando comando(
         "SELECT id, nome, tipo, capacidade, taxa_base, hora_abertura, "
@@ -59,6 +64,7 @@ std::unique_ptr<AreaComum> RepositorioAreaComum::buscarPorId(int id) {
     return comando.proxima() ? montar(comando) : nullptr;
 }
 
+// read: lista todas as areas
 std::vector<std::unique_ptr<AreaComum>> RepositorioAreaComum::listar() {
     SqliteComando comando(
         "SELECT id, nome, tipo, capacidade, taxa_base, hora_abertura, "
@@ -68,6 +74,7 @@ std::vector<std::unique_ptr<AreaComum>> RepositorioAreaComum::listar() {
     return resultado;
 }
 
+// update: muda os dados da area pelo id
 bool RepositorioAreaComum::atualizar(const AreaComum& entidade) {
     SqliteComando comando(
         "UPDATE area_comum SET nome = ?, tipo = ?, capacidade = ?, taxa_base = ?, "
@@ -83,6 +90,7 @@ bool RepositorioAreaComum::atualizar(const AreaComum& entidade) {
     return comando.alteradas() > 0;
 }
 
+// delete: apaga a area pelo id
 bool RepositorioAreaComum::remover(int id) {
     SqliteComando comando("DELETE FROM area_comum WHERE id = ?");
     comando.inteiro(1, id);

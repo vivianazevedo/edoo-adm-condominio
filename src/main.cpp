@@ -53,13 +53,16 @@ QHeaderView::section { background: #2F6F8F; color: white; padding: 6px;
                        border: none; font-weight: bold; }
 )QSS";
 
+// main da interface grafica: abre o banco, cria a janela e entra no loop do qt (app.exec)
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
     app.setStyle("Fusion");  // estilo base igual em qualquer sistema
     app.setStyleSheet(QString::fromUtf8(kTema));  // aplica o tema nas telas todas
 
+    // com --smoke abre tudo na memoria e fecha sem mostrar janela (usado nos testes)
     const bool smoke = argc >= 2 && QString::fromLocal8Bit(argv[1]) == "--smoke";
     try {
+        // procura o schema.sql na pasta atual e, se nao achar, na pasta do executavel
         QString schema = QDir::current().filePath("sql/schema.sql");
         if (!QFileInfo::exists(schema)) {
             schema = QDir(QApplication::applicationDirPath()).filePath("sql/schema.sql");
@@ -68,6 +71,7 @@ int main(int argc, char *argv[]) {
         if (!QFileInfo::exists(schema)) {
             throw std::runtime_error("sql/schema.sql nao encontrado");
         }
+        // no uso normal o banco e o arquivo condominio.db, no smoke e um banco so de memoria
         Database::instancia(smoke ? ":memory:" : "condominio.db", schema.toStdString());
         MenuPrincipal menu;
         if (smoke) return 0;

@@ -37,6 +37,7 @@ private:
     void removerFuncionario();
 
 public:
+    // recebe os services por referencia (o menu nao cria nada, so usa)
     MenuMoradores(ApartamentoService& apartamentoService,
                   MoradorService& moradorService,
                   FuncionarioService& funcionarioService);
