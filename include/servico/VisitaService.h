@@ -6,7 +6,6 @@
 #include "modelo/Visita.h"
 #include "repositorio/IRepositorio.h"
 
-using namespace std;
 
 class Visita; //declara classe visita 
 
@@ -21,8 +20,8 @@ class VisitaService {
                     IRepositorio<Visita>& repoVisita);
 
         // cadastra o visitante e devolve o id gerado
-        int cadastrarVisitante(const string& nome, const string& cpf,
-                            const string& telefone);
+        int cadastrarVisitante(const std::string& nome, const std::string& cpf,
+                            const std::string& telefone);
 
         // registra a entrada e devolve o id da visita.
         // porteiroId e o funcionario escolhido no formulario (rn05)
@@ -32,10 +31,10 @@ class VisitaService {
         void registrarSaida(int visitaId);
 
         // visitas que ainda nao tem saida
-        vector<unique_ptr<Visita>> listarAbertas();
+        std::vector<std::unique_ptr<Visita>> listarAbertas();
 
         // historico de visitas de um apartamento
-        vector<unique_ptr<Visita>> historicoPorApartamento(int apartamentoId);
+        std::vector<std::unique_ptr<Visita>> historicoPorApartamento(int apartamentoId);
 
 
 };

@@ -4,7 +4,6 @@
 #include "modelo/Visita.h"
 #include "repositorio/IRepositorio.h"
 
-using namespace std;
 
 // guarda e le visitas no sqlite
 // nao confere se o visitante e mesmo um visitante nem se o funcionario e porteiro,
@@ -12,8 +11,8 @@ using namespace std;
 class RepositorioVisita : public IRepositorio<Visita> {
 public:
     int inserir(const Visita& visita) override;
-    unique_ptr<Visita> buscarPorId(int id) override;
-    vector<unique_ptr<Visita>> listar() override;
+    std::unique_ptr<Visita> buscarPorId(int id) override;
+    std::vector<std::unique_ptr<Visita>> listar() override;
     bool atualizar(const Visita& visita) override;
     bool remover(int id) override;
 };

@@ -48,6 +48,10 @@ int ReservaService::criar(int moradorId, int areaId, const std::string& data,
     // Valida formato da data, periodo e identificadores antes de consultar o banco.
     Reserva candidata(0, moradorId, areaId, data, horaInicio, horaFim,
                       convidados, StatusReserva::ATIVA, 0.0);
+    // nao deixa reservar em data ou horario que ja passou
+    if (inicioReserva(candidata) < agora_()) {
+        throw ErroRegraNegocio("Nao e possivel reservar em data ou horario que ja passou");
+    }
     auto area = repoArea_->buscarPorId(areaId);
     if (!area) throw ErroRegraNegocio("Area comum nao encontrada");
     if (!area->validarReserva(convidados, horaInicio, horaFim)) {
@@ -64,7 +68,16 @@ int ReservaService::criar(int moradorId, int areaId, const std::string& data,
 
     Reserva nova(0, moradorId, areaId, data, horaInicio, horaFim,
                  convidados, StatusReserva::ATIVA, area->calcularTaxa(convidados));
-    return repoReserva_->inserir(nova);
+    // a area ja foi conferida acima, entao se o banco recusar por chave estrangeira
+    // o que sobra e o morador (traduz para mensagem de regra de negocio)
+    try {
+        return repoReserva_->inserir(nova);
+    } catch (const ErroBanco& e) {
+        if (std::string(e.what()).find("FOREIGN KEY") != std::string::npos) {
+            throw ErroRegraNegocio("Morador " + std::to_string(moradorId) + " nao encontrado");
+        }
+        throw;
+    }
 }
 
 bool ReservaService::cancelar(int reservaId) {

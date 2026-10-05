@@ -3,6 +3,8 @@
 #include <utility>
 #include "infra/ErroCondominio.h"
 
+using namespace std;  // permitido em .cpp (so e proibido nos .h)
+
 namespace {
 
 // RN07: o cpf tem que ser unico entre todas as pessoas (morador, funcionario e visitante)

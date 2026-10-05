@@ -8,6 +8,8 @@
 #include "modelo/Funcionario.h"
 #include "infra/ErroCondominio.h"
 
+using namespace std;  // permitido em .cpp (so e proibido nos .h)
+
 namespace {
 
 // devolve a data e hora de agora no formato AAAA-MM-DD HH:MM (o mesmo da visita)
@@ -67,7 +69,16 @@ int VisitaService::registrarEntrada(int visitanteId, int apartamentoId, int port
 
     // o construtor de visita valida os ids e a data (ErroValidacao)
     Visita visita(visitanteId, apartamentoId, porteiroId, agoraTexto());
-    return repoVisita_.inserir(visita);
+    // visitante e porteiro ja foram conferidos acima, entao se o banco recusar por chave
+    // estrangeira o que sobra e o apartamento (traduz para mensagem de regra de negocio)
+    try {
+        return repoVisita_.inserir(visita);
+    } catch (const ErroBanco& e) {
+        if (string(e.what()).find("FOREIGN KEY") != string::npos) {
+            throw ErroRegraNegocio("apartamento " + to_string(apartamentoId) + " nao encontrado");
+        }
+        throw;
+    }
 }
 
 void VisitaService::registrarSaida(int visitaId) {

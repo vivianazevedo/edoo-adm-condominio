@@ -4,6 +4,8 @@
 #include "infra/Database.h"
 #include "infra/ErroCondominio.h"
 
+using namespace std;  // permitido em .cpp (so e proibido nos .h)
+
 namespace {
 
 // comando preparado que se fecha sozinho quando sai do escopo

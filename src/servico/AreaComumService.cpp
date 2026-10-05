@@ -62,4 +62,14 @@ bool AreaComumService::editar(int id, const std::string& nome, int capacidade,
     throw ErroBanco("Tipo de area comum desconhecido: " + tipo);
 }
 
-bool AreaComumService::remover(int id) { return repo_->remover(id); }
+bool AreaComumService::remover(int id) {
+    // o banco recusa apagar area que tem reserva (chave estrangeira); avisa com regra de negocio
+    try {
+        return repo_->remover(id);
+    } catch (const ErroBanco& e) {
+        if (std::string(e.what()).find("FOREIGN KEY") != std::string::npos) {
+            throw ErroRegraNegocio("Area comum com reservas nao pode ser removida");
+        }
+        throw;
+    }
+}

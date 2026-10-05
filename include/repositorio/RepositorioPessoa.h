@@ -4,7 +4,6 @@
 #include "modelo/Pessoa.h"
 #include "repositorio/IRepositorio.h"
 
-using namespace std;
 
 // guarda e le pessoas no sqlite 
 // a tabela pessoa tem os dados comuns e cada tipo tem sua tabela extra
@@ -12,8 +11,8 @@ using namespace std;
 class RepositorioPessoa : public IRepositorio<Pessoa> {
 public:
     int inserir(const Pessoa& pessoa) override;
-    unique_ptr<Pessoa> buscarPorId(int id) override;
-    vector<unique_ptr<Pessoa>> listar() override;
+    std::unique_ptr<Pessoa> buscarPorId(int id) override;
+    std::vector<std::unique_ptr<Pessoa>> listar() override;
     bool atualizar(const Pessoa& pessoa) override;
     bool remover(int id) override;
 };

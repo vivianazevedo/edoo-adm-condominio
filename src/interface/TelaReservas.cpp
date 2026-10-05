@@ -174,7 +174,9 @@ TelaReservas::TelaReservas(QWidget* parent)
             [this] { executarNaTela(this, [this] { atualizar(); }); });
     connect(cancelarReserva, &QPushButton::clicked, this, [this] {
         executarNaTela(this, [this] {
-            reservas_.cancelar(idSelecionado(tabelaReservas_));
+            if (!reservas_.cancelar(idSelecionado(tabelaReservas_))) {
+                throw ErroRegraNegocio("Reserva nao encontrada.");
+            }
             atualizar();
         });
     });

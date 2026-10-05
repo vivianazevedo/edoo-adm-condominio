@@ -2,37 +2,36 @@
 #include <string> 
 #include "infra/ErroCondominio.h"
 
-using namespace std;
 
 class Pessoa {
 
     private:
         int id_ = 0;
-        string nome_;
-        string cpf_; 
-        string telefone_; 
+        std::string nome_;
+        std::string cpf_; 
+        std::string telefone_; 
 
     protected:
-        static string textoObrigatorio(const string& valor, const string& campo); // remove espacos das pontas e recusa texto sem nada 
-        static string dataIsoValida(const string& data, const string& campo); // confere data (morador e funcionario usam por isso deixo em pessoa)
+        static std::string textoObrigatorio(const std::string& valor, const std::string& campo); // remove espacos das pontas e recusa texto sem nada 
+        static std::string dataIsoValida(const std::string& data, const std::string& campo); // confere data (morador e funcionario usam por isso deixo em pessoa)
        
     public:
-        Pessoa (string nome, string cpf, string telefone, int id = 0);
+        Pessoa (std::string nome, std::string cpf, std::string telefone, int id = 0);
         virtual ~Pessoa() = default; 
 
-        virtual string tipo () const = 0;
+        virtual std::string tipo () const = 0;
 
         int id() const { return id_; }
-        const string& nome() const { return nome_; }
-        const string& cpf() const { return cpf_; }
-        const string& telefone() const { return telefone_; }
+        const std::string& nome() const { return nome_; }
+        const std::string& cpf() const { return cpf_; }
+        const std::string& telefone() const { return telefone_; }
 
-        static string normalizarCpf(const string& cpf);
-        static bool cpfValido(const string& cpf);
+        static std::string normalizarCpf(const std::string& cpf);
+        static bool cpfValido(const std::string& cpf);
 
         void setId(int id); // lanca errovalidacao se o valor for invalaido
-        void setNome(const string& nome);
-        void setCpf(const string& cpf);
-        void setTelefone(const string& telefone);
+        void setNome(const std::string& nome);
+        void setCpf(const std::string& cpf);
+        void setTelefone(const std::string& telefone);
 
 };
