@@ -4,15 +4,15 @@
 
 class AreaComum;
 
-// Cria a subclasse correspondente a area_comum.tipo no SQLite.
+// cria SalaoFestas, Piscina ou Churrasqueira conforme o tipo salvo na tabela area_comum
 class FabricaAreaComum final : public FabricaPorTipo<AreaComum> {
 public:
-    // Associa o construtor de SalaoFestas ao valor salvo no banco.
+    // liga o texto SalaoFestas a funcao que cria um SalaoFestas
     void registrarSalaoFestas(Criador criador);
 
-    // Associa o construtor de Piscina ao valor salvo no banco.
+    // liga o texto Piscina a funcao que cria uma Piscina
     void registrarPiscina(Criador criador);
 
-    // Associa o construtor de Churrasqueira ao valor salvo no banco.
+    // liga o texto Churrasqueira a funcao que cria uma Churrasqueira
     void registrarChurrasqueira(Criador criador);
 };

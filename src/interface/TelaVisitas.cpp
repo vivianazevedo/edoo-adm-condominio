@@ -14,6 +14,7 @@
 
 namespace {
 
+// deixa a tabela no padrao: colunas, linha inteira selecionavel, uma por vez e sem editar a celula
 void prepararTabela(QTableWidget* tabela, const QStringList& colunas) {
     tabela->setColumnCount(colunas.size());
     tabela->setHorizontalHeaderLabels(colunas);
@@ -27,11 +28,13 @@ void prepararTabela(QTableWidget* tabela, const QStringList& colunas) {
 
 }  // namespace
 
+// monta a tela inteira e liga os botoes aos services
 TelaVisitas::TelaVisitas(QWidget* parent)
     : QWidget(parent), funcionarios_(repoPessoas_), visitas_(repoPessoas_, repoVisitas_) {
     auto* pagina = new QWidget(this);
     auto* layout = new QVBoxLayout(pagina);
 
+    // parte dos funcionarios: formulario, botoes e tabela
     auto* grupoFuncionarios = new QGroupBox("Funcionarios", pagina);
     auto* layoutFuncionarios = new QVBoxLayout(grupoFuncionarios);
     auto* formularioFuncionario = new QFormLayout;
@@ -73,6 +76,7 @@ TelaVisitas::TelaVisitas(QWidget* parent)
     layoutFuncionarios->addWidget(tabelaFuncionarios_);
     layout->addWidget(grupoFuncionarios);
 
+    // parte dos visitantes: formulario, botao e tabela
     auto* grupoVisitantes = new QGroupBox("Visitantes", pagina);
     auto* layoutVisitantes = new QVBoxLayout(grupoVisitantes);
     auto* formularioVisitante = new QFormLayout;
@@ -94,6 +98,7 @@ TelaVisitas::TelaVisitas(QWidget* parent)
     layoutVisitantes->addWidget(tabelaVisitantes_);
     layout->addWidget(grupoVisitantes);
 
+    // parte das visitas: escolhe visitante, apartamento e porteiro pra registrar entrada e saida
     auto* grupoVisitas = new QGroupBox("Entrada, saida e historico de visitas", pagina);
     auto* layoutVisitas = new QVBoxLayout(grupoVisitas);
     auto* formularioVisita = new QFormLayout;
@@ -115,6 +120,7 @@ TelaVisitas::TelaVisitas(QWidget* parent)
     botoesVisita->addWidget(registrarEntrada);
     botoesVisita->addWidget(registrarSaida);
     layoutVisitas->addLayout(botoesVisita);
+    // combo pra filtrar o historico por apartamento
     filtroApartamento_ = new QComboBox(grupoVisitas);
     layoutVisitas->addWidget(filtroApartamento_);
     tabelaVisitas_ = new QTableWidget(grupoVisitas);
@@ -123,12 +129,15 @@ TelaVisitas::TelaVisitas(QWidget* parent)
     layoutVisitas->addWidget(tabelaVisitas_);
     layout->addWidget(grupoVisitas);
 
+    // poe tudo dentro de uma area com barra de rolagem
     auto* rolagem = new QScrollArea(this);
     rolagem->setWidgetResizable(true);
     rolagem->setWidget(pagina);
     auto* externo = new QVBoxLayout(this);
     externo->addWidget(rolagem);
 
+    // ligacao dos botoes (signal clicked) com as acoes
+    // o executarNaTela mostra uma janela com o erro se o service jogar excecao
     connect(cadastrarFuncionario, &QPushButton::clicked, this, [this] {
         executarNaTela(this, [this] {
             funcionarios_.cadastrar(nomeFuncionario_->text().trimmed().toStdString(),
@@ -158,6 +167,7 @@ TelaVisitas::TelaVisitas(QWidget* parent)
             atualizar();
         });
     });
+    // clicar numa linha busca o funcionario no banco e preenche o formulario
     connect(tabelaFuncionarios_, &QTableWidget::cellClicked, this, [this](int linha, int) {
         const int id = tabelaFuncionarios_->item(linha, 0)->text().toInt();
         auto pessoa = repoPessoas_.buscarPorId(id);
@@ -172,6 +182,7 @@ TelaVisitas::TelaVisitas(QWidget* parent)
                                            "yyyy-MM-dd"));
     });
 
+    // depois de cadastrar o visitante, ja deixa ele escolhido no combo da entrada
     connect(cadastrarVisitante, &QPushButton::clicked, this, [this] {
         executarNaTela(this, [this] {
             const int id = visitas_.cadastrarVisitante(
@@ -199,9 +210,11 @@ TelaVisitas::TelaVisitas(QWidget* parent)
     connect(filtroApartamento_, &QComboBox::currentIndexChanged, this,
             [this](int) { executarNaTela(this, [this] { atualizarVisitas(); }); });
 
+    // carrega os dados na primeira vez que a tela abre
     atualizar();
 }
 
+// recarrega funcionarios, visitantes, os combos e a tabela de visitas
 void TelaVisitas::atualizar() {
     const auto pessoas = repoPessoas_.listar();
     tabelaFuncionarios_->setRowCount(0);
@@ -220,6 +233,7 @@ void TelaVisitas::atualizar() {
             tabelaFuncionarios_->setItem(linha, 3, new QTableWidgetItem(QString::fromStdString(funcionario->telefone())));
             tabelaFuncionarios_->setItem(linha, 4, new QTableWidgetItem(cargo_->itemText(static_cast<int>(funcionario->cargo()))));
             tabelaFuncionarios_->setItem(linha, 5, new QTableWidgetItem(QString::fromStdString(funcionario->turno())));
+            // so porteiro entra na lista de porteiros (a regra de verdade esta no VisitaService)
             if (funcionario->ehPorteiro()) {
                 porteiro_->addItem(QString::fromStdString(funcionario->nome()), funcionario->id());
             }
@@ -234,9 +248,11 @@ void TelaVisitas::atualizar() {
         }
     }
 
+    // guarda o filtro que estava escolhido pra nao perder quando recarregar o combo
     const int filtroAnterior = filtroApartamento_->currentIndex() >= 0
         ? filtroApartamento_->currentData().toInt() : -1;
     apartamento_->clear();
+    // bloqueia os sinais enquanto recarrega, senao o combo chamaria atualizarVisitas varias vezes
     filtroApartamento_->blockSignals(true);
     filtroApartamento_->clear();
     apartamento_->addItem("Selecione...", -1);
@@ -251,6 +267,7 @@ void TelaVisitas::atualizar() {
     atualizarVisitas();
 }
 
+// mostra o historico do apartamento filtrado, ou todas as visitas se nao tiver filtro
 void TelaVisitas::atualizarVisitas() {
     const int apartamentoId = filtroApartamento_->currentData().toInt();
     auto eventos = apartamentoId > 0

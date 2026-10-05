@@ -5,7 +5,9 @@
 #include <QTabWidget>
 #include <QWidget>
 
+// janela principal da interface grafica (qt): so tem as abas, cada aba e uma tela
 class MenuPrincipal : public QMainWindow {
+    // macro do qt, necessaria pra usar signals e slots
     Q_OBJECT
 
 public:
@@ -13,6 +15,7 @@ public:
     ~MenuPrincipal();
 
 private:
+    // o widget que guarda as abas
     QTabWidget *abas;
 };
 

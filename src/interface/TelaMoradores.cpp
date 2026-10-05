@@ -13,6 +13,7 @@
 
 namespace {
 
+// deixa a tabela no padrao: colunas, linha inteira selecionavel, uma por vez e sem editar a celula
 void prepararTabela(QTableWidget* tabela, const QStringList& colunas) {
     tabela->setColumnCount(colunas.size());
     tabela->setHorizontalHeaderLabels(colunas);
@@ -26,12 +27,14 @@ void prepararTabela(QTableWidget* tabela, const QStringList& colunas) {
 
 }  // namespace
 
+// monta a tela inteira e liga os botoes aos services
 TelaMoradores::TelaMoradores(QWidget* parent)
     : QWidget(parent), apartamentos_(repoApartamentos_),
       moradores_(repoPessoas_, repoApartamentos_) {
     auto* pagina = new QWidget(this);
     auto* layout = new QVBoxLayout(pagina);
 
+    // parte dos apartamentos: formulario, botoes e tabela
     auto* grupoApartamentos = new QGroupBox("Apartamentos", pagina);
     auto* layoutApartamentos = new QVBoxLayout(grupoApartamentos);
     auto* formularioApartamento = new QFormLayout;
@@ -63,6 +66,7 @@ TelaMoradores::TelaMoradores(QWidget* parent)
     layoutApartamentos->addWidget(tabelaApartamentos_);
     layout->addWidget(grupoApartamentos);
 
+    // parte dos moradores: formulario, botoes e tabela
     auto* grupoMoradores = new QGroupBox("Moradores", pagina);
     auto* layoutMoradores = new QVBoxLayout(grupoMoradores);
     auto* formularioMorador = new QFormLayout;
@@ -103,12 +107,15 @@ TelaMoradores::TelaMoradores(QWidget* parent)
     layoutMoradores->addWidget(tabelaMoradores_);
     layout->addWidget(grupoMoradores);
 
+    // poe tudo dentro de uma area com barra de rolagem
     auto* rolagem = new QScrollArea(this);
     rolagem->setWidgetResizable(true);
     rolagem->setWidget(pagina);
     auto* externo = new QVBoxLayout(this);
     externo->addWidget(rolagem);
 
+    // ligacao dos botoes (signal clicked) com as acoes
+    // o executarNaTela mostra uma janela com o erro se o service jogar excecao
     connect(cadastrarApartamento, &QPushButton::clicked, this, [this] {
         executarNaTela(this, [this] {
             apartamentos_.cadastrar(bloco_->text().trimmed().toStdString(),
@@ -130,6 +137,7 @@ TelaMoradores::TelaMoradores(QWidget* parent)
             atualizar();
         });
     });
+    // clicar numa linha preenche o formulario, fica facil de editar
     connect(tabelaApartamentos_, &QTableWidget::cellClicked, this, [this](int linha, int) {
         bloco_->setText(tabelaApartamentos_->item(linha, 1)->text());
         numero_->setText(tabelaApartamentos_->item(linha, 2)->text());
@@ -165,6 +173,7 @@ TelaMoradores::TelaMoradores(QWidget* parent)
             atualizar();
         });
     });
+    // clicar numa linha busca o morador no banco e preenche o formulario
     connect(tabelaMoradores_, &QTableWidget::cellClicked, this, [this](int linha, int) {
         const int id = tabelaMoradores_->item(linha, 0)->text().toInt();
         auto pessoa = repoPessoas_.buscarPorId(id);
@@ -179,13 +188,16 @@ TelaMoradores::TelaMoradores(QWidget* parent)
                                           "yyyy-MM-dd"));
     });
 
+    // carrega os dados na primeira vez que a tela abre
     atualizar();
 }
 
+// recarrega as duas tabelas e a lista de apartamentos com os dados do banco
 void TelaMoradores::atualizar() {
     const auto apartamentos = apartamentos_.listar();
     tabelaApartamentos_->setRowCount(0);
     apartamento_->clear();
+    // o combo guarda o id de cada apartamento como dado escondido, o -1 e a opcao sem escolha
     apartamento_->addItem("Selecione...", -1);
     for (const auto& apto : apartamentos) {
         const int linha = tabelaApartamentos_->rowCount();
@@ -200,6 +212,7 @@ void TelaMoradores::atualizar() {
     const auto moradores = moradores_.listar();
     tabelaMoradores_->setRowCount(0);
     for (const auto& pessoa : moradores) {
+        // o service devolve Pessoa, o dynamic_cast pega o Morador pra ler os campos dele
         const auto* morador = dynamic_cast<const Morador*>(pessoa.get());
         if (!morador) continue;
         const int linha = tabelaMoradores_->rowCount();

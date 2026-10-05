@@ -1,4 +1,4 @@
-// Testes das correcoes de bugs: datas validas, texto so com espacos, erros de chave
+// testes das correcoes de bugs: datas validas, texto so com espacos, erros de chave
 // estrangeira traduzidos para regra de negocio e reserva em data passada.
 #include <functional>
 #include <iostream>
@@ -17,8 +17,10 @@
 
 namespace {
 
+// conta quantos testes falharam, no fim o main devolve 1 se for maior que zero
 int falhas = 0;
 
+// marca a falha e continua (nao para no primeiro erro)
 void exigir(bool condicao, const std::string& mensagem) {
     if (!condicao) {
         std::cerr << "FALHOU: " << mensagem << "\n";
@@ -44,6 +46,7 @@ void exigirErro(const std::function<void()>& acao, const std::string& mensagem) 
 
 }  // namespace
 
+// monta um banco em memoria com dados base e testa cada bug que foi corrigido
 int main(int argc, char* argv[]) {
     const std::string schema = argc > 1 ? argv[1] : "sql/schema.sql";
     Database::instancia(":memory:", schema);

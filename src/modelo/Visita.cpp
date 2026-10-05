@@ -42,6 +42,7 @@ Visita::Visita(int visitanteId, int apartamentoId, int registradoPor,
     setSaida(saida);
 }
 
+// getters
 int Visita::getId() const { return id_; }
 int Visita::getVisitanteId() const { return visitanteId_; }
 int Visita::getApartamentoId() const { return apartamentoId_; }
@@ -90,8 +91,10 @@ void Visita::setSaida(const string& saida) {
     saida_ = saida;
 }
 
+// visita aberta e a que ainda nao tem saida
 bool Visita::estaAberta() const { return saida_.empty(); }
 
+// texto resumido pras telas e pro terminal
 string Visita::descricao() const {
     string texto = "Visitante " + to_string(visitanteId_) + " no apto " +
                    to_string(apartamentoId_) + ", entrada " + entrada_;

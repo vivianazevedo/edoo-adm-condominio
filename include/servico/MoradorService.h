@@ -8,9 +8,11 @@
 #include "repositorio/IRepositorio.h"
 
 
+// regras de negocio dos moradores: o apartamento tem que existir e o cpf nao pode repetir
 class MoradorService {
 
     private:
+        // morador e guardado como Pessoa, no repositorio de pessoas
         IRepositorio<Pessoa>& repoPessoa_;
         IRepositorio<Apartamento>& repoApto_;
         

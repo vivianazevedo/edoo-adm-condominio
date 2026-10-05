@@ -1,3 +1,4 @@
+// teste do Database: confere o singleton, as chaves estrangeiras ligadas, as 7 tabelas do schema e o ErroBanco
 #include "infra/Database.h"
 #include "infra/ErroCondominio.h"
 
@@ -10,6 +11,7 @@
 
 namespace {
 
+// roda um select que devolve um numero e le esse numero
 int valorInteiro(sqlite3* conexao, const char* sql) {
     sqlite3_stmt* comando = nullptr;
     if (sqlite3_prepare_v2(conexao, sql, -1, &comando, nullptr) != SQLITE_OK) {

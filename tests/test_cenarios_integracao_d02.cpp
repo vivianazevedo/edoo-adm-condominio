@@ -1,3 +1,4 @@
+// os 10 cenarios de integracao D02 (descritos em docs/testes.md), usando services e repositorios reais num banco em memoria
 #include "infra/Database.h"
 #include "infra/ErroCondominio.h"
 #include "modelo/Morador.h"
@@ -25,10 +26,12 @@
 
 namespace {
 
+// joga excecao se a condicao for falsa, e assim que o teste falha
 void exigir(bool condicao, const char* mensagem) {
     if (!condicao) throw std::runtime_error(mensagem);
 }
 
+// espera que a acao jogue ErroRegraNegocio, se nao jogar o teste falha
 void exigirRegra(const std::function<void()>& acao, const char* mensagem) {
     bool rejeitada = false;
     try { acao(); }
@@ -36,6 +39,7 @@ void exigirRegra(const std::function<void()>& acao, const char* mensagem) {
     exigir(rejeitada, mensagem);
 }
 
+// devolve um horario fixo em maio de 2030, assim o resultado nao depende do dia em que o teste roda
 std::chrono::system_clock::time_point horarioFixo(int dia, int hora) {
     std::tm data{};
     data.tm_year = 2030 - 1900;
@@ -46,6 +50,7 @@ std::chrono::system_clock::time_point horarioFixo(int dia, int hora) {
     return std::chrono::system_clock::from_time_t(std::mktime(&data));
 }
 
+// roda um cenario e imprime se passou ou falhou
 void executar(const char* codigo, const std::function<void()>& acao) {
     try {
         acao();

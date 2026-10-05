@@ -4,6 +4,7 @@
 #include "interface/TelaVisitas.h"
 #include "interface/UtilQt.h"
 
+// monta a janela: titulo, tamanho e as tres abas
 MenuPrincipal::MenuPrincipal(QWidget *parent)
     : QMainWindow(parent) {
     
@@ -12,6 +13,7 @@ MenuPrincipal::MenuPrincipal(QWidget *parent)
 
     abas = new QTabWidget(this);
 
+    // cada tela e um QWidget e vira uma aba
     auto* moradores = new TelaMoradores(this);
     auto* reservas = new TelaReservas(this);
     auto* visitas = new TelaVisitas(this);
@@ -19,6 +21,7 @@ MenuPrincipal::MenuPrincipal(QWidget *parent)
     abas->addTab(reservas, "Areas e Reservas");
     abas->addTab(visitas, "Portaria e Visitas");
 
+    // quando troca de aba, a tela daquela aba recarrega os dados do banco (signal e slot)
     connect(abas, &QTabWidget::currentChanged, this,
             [this, moradores, reservas, visitas](int indice) {
         executarNaTela(this, [=] {
@@ -31,4 +34,5 @@ MenuPrincipal::MenuPrincipal(QWidget *parent)
     setCentralWidget(abas);
 }
 
+// vazio de proposito: os widgets filhos sao apagados pelo qt sozinho (o pai e o dono)
 MenuPrincipal::~MenuPrincipal() {}

@@ -7,9 +7,11 @@
 #include "repositorio/IRepositorio.h"
 
 
+// regras de negocio dos funcionarios (o cpf nao pode repetir em nenhuma pessoa)
 class FuncionarioService {
 
     private:
+        // funcionario e guardado como Pessoa, no repositorio de pessoas
         IRepositorio<Pessoa>& repoPessoa_;
 
     public:

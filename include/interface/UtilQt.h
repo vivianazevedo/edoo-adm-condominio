@@ -1,5 +1,6 @@
 #pragma once
 
+// funcoes de ajuda que todas as telas qt usam
 #include "infra/ErroCondominio.h"
 
 #include <QMessageBox>
@@ -9,6 +10,8 @@
 #include <exception>
 #include <functional>
 
+// devolve o id (coluna 0) da linha selecionada na tabela, se nao tiver linha joga ErroValidacao
+// inline pra poder ficar no .h sem dar erro de definicao repetida
 inline int idSelecionado(QTableWidget* tabela) {
     const int linha = tabela->currentRow();
     if (linha < 0 || tabela->item(linha, 0) == nullptr) {
@@ -17,6 +20,8 @@ inline int idSelecionado(QTableWidget* tabela) {
     return tabela->item(linha, 0)->text().toInt();
 }
 
+// roda a acao e transforma cada tipo de erro numa janela de mensagem (aviso ou erro)
+// assim o programa nao fecha quando um service joga excecao
 inline void executarNaTela(QWidget* tela, const std::function<void()>& acao) {
     try {
         acao();

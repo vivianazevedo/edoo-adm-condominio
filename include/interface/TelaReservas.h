@@ -17,21 +17,25 @@
 
 #include <memory>
 
-// Cadastro de areas e operacoes de reserva conectadas ao SQLite.
+// aba de areas comuns e reservas (qt): cadastra areas e cria, consulta e cancela reservas
+// nunca mexe no sql, so chama os services
 class TelaReservas : public QWidget {
     Q_OBJECT
 
 public:
     explicit TelaReservas(QWidget* parent = nullptr);
+    // recarrega as tabelas e as listas com o que esta no banco
     void atualizar();
 
 private:
+    // os services de areas e reservas recebem shared_ptr, por isso esses dois repositorios sao shared_ptr
     std::shared_ptr<RepositorioAreaComum> repoAreas_;
     std::shared_ptr<RepositorioReserva> repoReservas_;
     RepositorioPessoa repoPessoas_;
     AreaComumService areas_;
     ReservaService reservas_;
 
+    // campos dos formularios e tabelas, sao ponteiros e quem apaga eles e o qt
     QComboBox* tipo_ = nullptr;
     QLineEdit* nomeArea_ = nullptr;
     QSpinBox* capacidade_ = nullptr;

@@ -2,6 +2,7 @@
 
 #include <utility>
 
+// cada metodo so chama o registrar da classe base com o mesmo texto que fica salvo no banco
 void FabricaAreaComum::registrarSalaoFestas(Criador criador) {
     registrar("SalaoFestas", std::move(criador));
 }

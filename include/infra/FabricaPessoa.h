@@ -4,15 +4,15 @@
 
 class Pessoa;
 
-// Cria Morador, Visitante ou Funcionario conforme pessoa.tipo no SQLite.
+// cria Morador, Visitante ou Funcionario conforme o tipo salvo na tabela pessoa
 class FabricaPessoa final : public FabricaPorTipo<Pessoa> {
 public:
-    // Associa o construtor de Morador ao valor "morador" do banco.
+    // liga o texto morador a funcao que cria um Morador
     void registrarMorador(Criador criador);
 
-    // Associa o construtor de Visitante ao valor "visitante" do banco.
+    // liga o texto visitante a funcao que cria um Visitante
     void registrarVisitante(Criador criador);
 
-    // Associa o construtor de Funcionario ao valor "funcionario" do banco.
+    // liga o texto funcionario a funcao que cria um Funcionario
     void registrarFuncionario(Criador criador);
 };

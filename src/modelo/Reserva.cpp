@@ -8,8 +8,10 @@
 
 namespace {
 
+// true se o caractere e um numero
 bool digito(char c) { return std::isdigit(static_cast<unsigned char>(c)) != 0; }
 
+// le um pedaco do texto como numero, joga ErroValidacao se tiver letra no meio
 int numero(const std::string& texto, std::size_t inicio, std::size_t tamanho) {
     for (std::size_t i = inicio; i < inicio + tamanho; ++i) {
         if (!digito(texto[i])) throw ErroValidacao("Data ou horario invalido");
@@ -17,6 +19,7 @@ int numero(const std::string& texto, std::size_t inicio, std::size_t tamanho) {
     return std::stoi(texto.substr(inicio, tamanho));
 }
 
+// confere AAAA-MM-DD de verdade: mes de 1 a 12 e dia dentro do limite do mes (conta ano bissexto)
 void validarData(const std::string& data) {
     if (data.size() != 10 || data[4] != '-' || data[7] != '-') {
         throw ErroValidacao("Data deve estar em AAAA-MM-DD");
@@ -26,11 +29,13 @@ void validarData(const std::string& data) {
     const int dia = numero(data, 8, 2);
     if (ano == 0 || mes < 1 || mes > 12) throw ErroValidacao("Data invalida");
     const int diasMes[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    // ano bissexto: divisivel por 400, ou divisivel por 4 mas nao por 100
     const bool bissexto = ano % 400 == 0 || (ano % 4 == 0 && ano % 100 != 0);
     const int limite = diasMes[mes - 1] + ((mes == 2 && bissexto) ? 1 : 0);
     if (dia < 1 || dia > limite) throw ErroValidacao("Data invalida");
 }
 
+// transforma HH:MM em minutos desde meia-noite
 int minutos(const std::string& hora) {
     if (hora.size() != 5 || hora[2] != ':') {
         throw ErroValidacao("Horario deve estar em HH:MM");
@@ -43,6 +48,7 @@ int minutos(const std::string& hora) {
 
 }  // namespace
 
+// valida tudo na criacao: data, ids, convidados, valor e fim depois do inicio
 Reserva::Reserva(int id, int moradorId, int areaId, std::string data,
                  std::string horaInicio, std::string horaFim, int numConvidados,
                  StatusReserva status, double valor)

@@ -1,3 +1,4 @@
+// teste dos services de apartamento, morador e funcionario: cadastro, listagem, cpf duplicado e apartamento ocupado
 #include "infra/Database.h"
 #include "infra/ErroCondominio.h"
 #include "repositorio/RepositorioApartamento.h"
@@ -10,6 +11,7 @@
 
 namespace {
 
+// joga excecao se a condicao for falsa, e assim que o teste falha
 void exigir(bool condicao, const char* mensagem) {
     if (!condicao) throw std::runtime_error(mensagem);
 }
@@ -19,7 +21,7 @@ void exigir(bool condicao, const char* mensagem) {
 int main(int argc, char* argv[]) {
     if (argc != 2) throw std::invalid_argument("Informe o caminho de sql/schema.sql");
 
-    // O banco existe apenas durante este teste.
+    // o banco existe so durante este teste
     Database::instancia(":memory:", argv[1]);
     RepositorioApartamento repoApartamentos;
     RepositorioPessoa repoPessoas;

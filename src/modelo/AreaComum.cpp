@@ -9,6 +9,7 @@
 
 namespace {
 
+// transforma HH:MM em minutos desde meia-noite (08:30 vira 510), joga ErroValidacao se o formato estiver errado
 int minutos(const std::string& hora) {
     if (hora.size() != 5 || hora[2] != ':' ||
         !std::isdigit(static_cast<unsigned char>(hora[0])) ||
@@ -23,6 +24,7 @@ int minutos(const std::string& hora) {
     return h * 60 + m;
 }
 
+// true se o texto so tem espacos (ou esta vazio)
 bool somenteEspacos(const std::string& valor) {
     return std::all_of(valor.begin(), valor.end(), [](unsigned char c) {
         return std::isspace(c) != 0;
@@ -31,6 +33,7 @@ bool somenteEspacos(const std::string& valor) {
 
 }  // namespace
 
+// guarda os dados e joga ErroValidacao se algum valor for invalido
 AreaComum::AreaComum(int id, std::string nome, int capacidade, double taxaBase,
                      std::string horaAbertura, std::string horaFechamento)
     : id_(id), nome_(std::move(nome)), capacidade_(capacidade), taxaBase_(taxaBase),
@@ -42,6 +45,8 @@ AreaComum::AreaComum(int id, std::string nome, int capacidade, double taxaBase,
     }
 }
 
+// confere tudo de uma vez: convidados cabem, horario dentro do funcionamento,
+// fim depois do inicio e duracao dentro do limite que a subclasse passou
 bool AreaComum::validarPeriodo(int convidados, const std::string& inicio,
                               const std::string& fim, int duracaoMaximaMinutos) const {
     const int inicioMinutos = minutos(inicio);

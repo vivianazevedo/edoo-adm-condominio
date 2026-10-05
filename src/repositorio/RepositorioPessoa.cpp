@@ -153,6 +153,7 @@ unique_ptr<Pessoa> montar(Comando& stmt) {
 
 }  // namespace
 
+// create: insere na tabela pessoa e na tabela extra do tipo, tudo dentro de uma transacao
 int RepositorioPessoa::inserir(const Pessoa& pessoa) {
     Transacao transacao;
 
@@ -167,6 +168,7 @@ int RepositorioPessoa::inserir(const Pessoa& pessoa) {
     int id = static_cast<int>(sqlite3_last_insert_rowid(conexao()));
 
     // depois a tabela extra do tipo (visitante nao tem)
+    // dynamic_cast descobre qual subclasse veio no ponteiro da classe base
     if (const Morador* morador = dynamic_cast<const Morador*>(&pessoa)) {
         Comando stmt = preparar(
             "INSERT INTO morador (pessoa_id, apartamento_id, tipo_ocupacao, data_entrada) "
@@ -193,6 +195,7 @@ int RepositorioPessoa::inserir(const Pessoa& pessoa) {
     return id;
 }
 
+// read: busca pelo id e ja devolve a subclasse certa (Morador, Funcionario ou Visitante)
 unique_ptr<Pessoa> RepositorioPessoa::buscarPorId(int id) {
     Comando stmt = preparar(string(SELECT_PESSOA) + "WHERE p.id = ?");
     sqlite3_bind_int(stmt.get(), 1, id);
@@ -207,6 +210,7 @@ unique_ptr<Pessoa> RepositorioPessoa::buscarPorId(int id) {
     throw ErroBanco(string("erro ao buscar pessoa: ") + sqlite3_errmsg(conexao()));
 }
 
+// read: lista todas as pessoas ordenadas por nome
 vector<unique_ptr<Pessoa>> RepositorioPessoa::listar() {
     Comando stmt = preparar(string(SELECT_PESSOA) + "ORDER BY p.nome");
 
@@ -222,6 +226,7 @@ vector<unique_ptr<Pessoa>> RepositorioPessoa::listar() {
     return lista;
 }
 
+// update: muda os dados comuns e os da tabela extra do tipo, tambem em transacao
 bool RepositorioPessoa::atualizar(const Pessoa& pessoa) {
     Transacao transacao;
 
@@ -269,6 +274,7 @@ bool RepositorioPessoa::atualizar(const Pessoa& pessoa) {
     return true;
 }
 
+// delete: apaga das tabelas extras e depois de pessoa, em transacao
 bool RepositorioPessoa::remover(int id) {
     Transacao transacao;
 

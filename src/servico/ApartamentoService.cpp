@@ -21,8 +21,10 @@ bool existeDuplicado(IRepositorio<Apartamento>& repo, const Apartamento& novo, i
 
 }  // namespace
 
+// guarda a referencia do repositorio
 ApartamentoService::ApartamentoService(IRepositorio<Apartamento>& repo) : repo_(repo) {}
 
+// valida os dados, confere se ja existe o mesmo bloco e numero e salva
 int ApartamentoService::cadastrar(const string& bloco, const string& numero, int andar) {
     // o construtor valida os campos e joga ErroValidacao se estiver errado
     Apartamento novo(bloco, numero, andar);
@@ -33,14 +35,17 @@ int ApartamentoService::cadastrar(const string& bloco, const string& numero, int
     return repo_.inserir(novo);
 }
 
+// so repassa pro repositorio
 vector<unique_ptr<Apartamento>> ApartamentoService::listar() {
     return repo_.listar();
 }
 
+// so repassa pro repositorio
 unique_ptr<Apartamento> ApartamentoService::buscar(int id) {
     return repo_.buscarPorId(id);
 }
 
+// confere se o apartamento existe, valida os dados novos e ve se nao vira duplicado de outro
 void ApartamentoService::editar(int id, const string& bloco, const string& numero, int andar) {
     if (repo_.buscarPorId(id) == nullptr) {
         throw ErroRegraNegocio("apartamento " + to_string(id) + " nao encontrado");
@@ -56,12 +61,13 @@ void ApartamentoService::editar(int id, const string& bloco, const string& numer
     }
 }
 
+// confere se o apartamento existe e tenta remover
 void ApartamentoService::remover(int id) {
     if (repo_.buscarPorId(id) == nullptr) {
         throw ErroRegraNegocio("apartamento " + to_string(id) + " nao encontrado");
     }
 
-    // RN08: o banco recusa apagar apartamento que ainda tem morador (chave estrangeira)
+    // rn08: o banco recusa apagar apartamento que ainda tem morador (chave estrangeira)
     // se o erro for esse, avisa com uma mensagem de regra de negocio
     try {
         repo_.remover(id);

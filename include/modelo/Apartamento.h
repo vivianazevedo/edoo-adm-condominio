@@ -4,8 +4,9 @@
 
 
 
-class Morador;// declara morador 
+class Morador;// avisa que Morador existe (basta isso porque so guardamos ponteiros)
 
+// apartamento do condominio, guarda ponteiros dos moradores que moram nele
 class Apartamento {
 
     private:
@@ -18,6 +19,7 @@ class Apartamento {
     public:
         Apartamento(const std::string& bloco, const std::string& numero, int andar, int id = 0); // id 0 quer dizer que ainda nao foi salvo no banco
 
+        // getters e setters (os setters de bloco, numero e andar validam)
         int getId() const;
         const std::string& getBloco() const;
         const std::string& getNumero() const;

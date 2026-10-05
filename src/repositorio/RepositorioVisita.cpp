@@ -74,6 +74,7 @@ unique_ptr<Visita> montar(Comando& stmt) {
 
 }  // namespace
 
+// create: insere a visita e devolve o id
 int RepositorioVisita::inserir(const Visita& visita) {
     Comando stmt = preparar(
         "INSERT INTO visita (visitante_id, apartamento_id, registrado_por, entrada, saida) "
@@ -85,6 +86,7 @@ int RepositorioVisita::inserir(const Visita& visita) {
     return static_cast<int>(sqlite3_last_insert_rowid(conexao()));
 }
 
+// read: busca uma visita pelo id (nullptr se nao existir)
 unique_ptr<Visita> RepositorioVisita::buscarPorId(int id) {
     Comando stmt = preparar(string(SELECT_VISITA) + " WHERE id = ?");
     sqlite3_bind_int(stmt.get(), 1, id);
@@ -99,6 +101,7 @@ unique_ptr<Visita> RepositorioVisita::buscarPorId(int id) {
     throw ErroBanco(string("erro ao buscar visita: ") + sqlite3_errmsg(conexao()));
 }
 
+// read: lista todas as visitas
 vector<unique_ptr<Visita>> RepositorioVisita::listar() {
     // mais antigas primeiro, o id desempata entradas no mesmo minuto
     Comando stmt = preparar(string(SELECT_VISITA) + " ORDER BY entrada, id");
@@ -115,6 +118,7 @@ vector<unique_ptr<Visita>> RepositorioVisita::listar() {
     return lista;
 }
 
+// update: muda os dados da visita (e assim que a saida e registrada)
 bool RepositorioVisita::atualizar(const Visita& visita) {
     Comando stmt = preparar(
         "UPDATE visita SET visitante_id = ?, apartamento_id = ?, registrado_por = ?, "
@@ -127,6 +131,7 @@ bool RepositorioVisita::atualizar(const Visita& visita) {
     return sqlite3_changes(conexao()) > 0;
 }
 
+// delete: apaga a visita pelo id
 bool RepositorioVisita::remover(int id) {
     Comando stmt = preparar("DELETE FROM visita WHERE id = ?");
     sqlite3_bind_int(stmt.get(), 1, id);

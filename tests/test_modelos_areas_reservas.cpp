@@ -1,3 +1,4 @@
+// teste dos modelos: taxa e regras de cada area comum, e as validacoes da Reserva (data e periodo)
 #include "infra/ErroCondominio.h"
 #include "modelo/Churrasqueira.h"
 #include "modelo/Piscina.h"
@@ -8,6 +9,7 @@
 
 namespace {
 
+// joga excecao se a condicao for falsa, e assim que o teste falha
 void exigir(bool condicao, const char* mensagem) {
     if (!condicao) throw std::runtime_error(mensagem);
 }

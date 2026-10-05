@@ -4,6 +4,7 @@
 
 
 
+// visitante do condominio, herda de Pessoa e nao tem tabela propria no banco
 class Visitante : public Pessoa {
 public:
     Visitante(std::string nome, std::string cpf, std::string telefone, int id = 0); // construtor 

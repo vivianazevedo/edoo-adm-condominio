@@ -13,6 +13,7 @@ Apartamento::Apartamento(const string& bloco, const string& numero,
     setAndar(andar);
 }
 
+// getters: so devolvem o valor guardado
 int Apartamento::getId() const { return id_; }
 const string& Apartamento::getBloco() const { return bloco_; }
 const string& Apartamento::getNumero() const { return numero_; }
@@ -20,6 +21,7 @@ int Apartamento::getAndar() const { return andar_; }
 
 void Apartamento::setId(int id) { id_ = id; }
 
+// setters validam antes de guardar e jogam ErroValidacao se o valor estiver errado
 void Apartamento::setBloco(const string& bloco) {
     if (bloco.empty()) {
         throw ErroValidacao("O bloco não pode ser vazio.");
@@ -64,14 +66,18 @@ bool Apartamento::removerMorador(int moradorId) {
     return false;
 }
 
+// devolve a lista por referencia constante, assim nao copia
 const vector<Morador*>& Apartamento::getMoradores() const { return moradores_; }
 
+// converte o tamanho do vector pra int
 int Apartamento::quantidadeMoradores() const {
     return static_cast<int>(moradores_.size());
 }
 
+// true se tem pelo menos um morador ligado
 bool Apartamento::temMoradores() const { return !moradores_.empty(); }
 
+// monta o texto que as telas mostram, ex: Bloco A, apto 101 (andar 1)
 string Apartamento::descricao() const {
     return "Bloco " + bloco_ + ", apto " + numero_ +
            " (andar " + to_string(andar_) + ")";

@@ -7,11 +7,13 @@
 #include "repositorio/IRepositorio.h"
 
 
-class Visita; //declara classe visita 
+class Visita; //declara a classe visita (o include de cima ja traz ela tambem)
 
+// regras da portaria: cadastrar visitante, registrar entrada (so porteiro) e saida, e consultar o historico
 class VisitaService {
 
     private:
+        // usa o repositorio de pessoas (visitante e porteiro) e o de visitas
         IRepositorio<Pessoa>& repoPessoa_;
         IRepositorio<Visita>& repoVisita_;
         

@@ -14,10 +14,12 @@
 #include <iostream>
 #include <string>
 
+// main do terminal: abre o banco, monta repositorios, services e menus e mostra o menu principal
 int main(int argc, char* argv[]) {
     try {
-        // O CMake copia sql/ para a pasta de build; na raiz do projeto ele ja existe.
+        // o cmake copia a pasta sql pra pasta de build, e na raiz do projeto ela ja existe
         Database::instancia("condominio.db", "sql/schema.sql");
+        // com --smoke so abre o banco e sai (usado no teste automatico)
         if (argc == 2 && std::string(argv[1]) == "--smoke") {
             std::cout << "Terminal e banco inicializados.\n";
             return 0;
@@ -27,6 +29,8 @@ int main(int argc, char* argv[]) {
             return 2;
         }
 
+        // montagem de baixo pra cima: repositorios -> services -> menus
+        // cada um recebe o de baixo por referencia
         RepositorioApartamento repoApartamentos;
         RepositorioPessoa repoPessoas;
         ApartamentoService apartamentos(repoApartamentos);
@@ -38,6 +42,7 @@ int main(int argc, char* argv[]) {
         VisitaService visitas(repoPessoas, repoVisitas);
         MenuVisitas menuVisitas(visitas);
 
+        // repete o menu principal ate digitar 0 ou a entrada acabar
         std::string opcao;
         while (std::cin) {
             std::cout << "\n=== Sistema de Gestao de Condominio ===\n"

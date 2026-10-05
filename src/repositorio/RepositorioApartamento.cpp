@@ -54,6 +54,7 @@ unique_ptr<Apartamento> montar(Comando& stmt) {
 
 }  // namespace
 
+// create: insere o apartamento e devolve o id
 int RepositorioApartamento::inserir(const Apartamento& apartamento) {
     Comando stmt = preparar(
         "INSERT INTO apartamento (bloco, numero, andar) VALUES (?, ?, ?)");
@@ -66,6 +67,7 @@ int RepositorioApartamento::inserir(const Apartamento& apartamento) {
     return static_cast<int>(sqlite3_last_insert_rowid(conexao()));
 }
 
+// read: busca um apartamento pelo id (nullptr se nao existir)
 unique_ptr<Apartamento> RepositorioApartamento::buscarPorId(int id) {
     Comando stmt = preparar(
         "SELECT id, bloco, numero, andar FROM apartamento WHERE id = ?");
@@ -81,6 +83,7 @@ unique_ptr<Apartamento> RepositorioApartamento::buscarPorId(int id) {
     throw ErroBanco(string("erro ao buscar apartamento: ") + sqlite3_errmsg(conexao()));
 }
 
+// read: lista todos ordenados por bloco e numero
 vector<unique_ptr<Apartamento>> RepositorioApartamento::listar() {
     Comando stmt = preparar(
         "SELECT id, bloco, numero, andar FROM apartamento ORDER BY bloco, numero");
@@ -97,6 +100,7 @@ vector<unique_ptr<Apartamento>> RepositorioApartamento::listar() {
     return lista;
 }
 
+// update: muda os dados do apartamento pelo id
 bool RepositorioApartamento::atualizar(const Apartamento& apartamento) {
     Comando stmt = preparar(
         "UPDATE apartamento SET bloco = ?, numero = ?, andar = ? WHERE id = ?");
@@ -110,6 +114,7 @@ bool RepositorioApartamento::atualizar(const Apartamento& apartamento) {
     return sqlite3_changes(conexao()) > 0;
 }
 
+// delete: apaga pelo id (o banco recusa se ainda tiver morador ligado nele)
 bool RepositorioApartamento::remover(int id) {
     Comando stmt = preparar("DELETE FROM apartamento WHERE id = ?");
     sqlite3_bind_int(stmt.get(), 1, id);

@@ -1,3 +1,4 @@
+// teste dos repositorios de area comum e de reserva no sqlite (a fabrica reconstroi a subclasse certa)
 #include "infra/Database.h"
 #include "infra/ErroCondominio.h"
 #include "modelo/Churrasqueira.h"
@@ -10,6 +11,7 @@
 #include <stdexcept>
 
 namespace {
+// joga excecao se a condicao for falsa, e assim que o teste falha
 void exigir(bool ok, const char* mensagem) {
     if (!ok) throw std::runtime_error(mensagem);
 }

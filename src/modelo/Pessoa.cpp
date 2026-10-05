@@ -6,7 +6,7 @@
 using namespace std; 
 
 
-//verificacao cpf 
+// parte do cpf: primeiro tira a formatacao (normalizarCpf), depois confere (cpfValido)
 string Pessoa :: normalizarCpf (const string& cpf) { //tira tudo que nao for digito
 
     string digitos; 
@@ -22,7 +22,7 @@ string Pessoa :: normalizarCpf (const string& cpf) { //tira tudo que nao for dig
 }
 
 
-// VERIFICACAO CPF 
+// confere o cpf: 11 digitos, nao pode ter todos iguais e os 2 digitos verificadores tem que bater
 
 bool Pessoa::cpfValido(const string& cpf) {
     string digitos = normalizarCpf(cpf);
@@ -41,7 +41,7 @@ bool todosIguais = true; // se tudo for igual recusa
         return false;
     }  
 
-//regra de chegagem dos digitos verificadores 10 e 11 
+// 1o digito verificador: soma dos 9 primeiros digitos com pesos de 10 ate 2, e compara com o 10o digito
 
 int soma = 0;
     for (int i = 0; i < 9; i++) {
@@ -55,6 +55,7 @@ int soma = 0;
         return false;
     }
 
+// 2o digito verificador: agora com os 10 primeiros digitos e pesos de 11 ate 2, compara com o 11o digito
 soma = 0;
     for (int i = 0; i < 10; i++) {
         soma += (digitos[i] - '0') * (11 - i);
@@ -66,6 +67,7 @@ soma = 0;
     return dv2 == digitos[10] - '0';
 }
 
+// tira os espacos das pontas e joga ErroValidacao se o texto ficar vazio
 string Pessoa::textoObrigatorio(const string& valor, const string& campo) {
     // tira os espacos das pontas e recusa texto que fica vazio (so espacos conta como vazio)
     const char* espacos = " \t\r\n";
@@ -77,7 +79,7 @@ string Pessoa::textoObrigatorio(const string& valor, const string& campo) {
     return valor.substr(inicio, fim - inicio + 1);
 }
 
-// descrever os 4 sets 
+// setters: cada um valida o valor antes de guardar e joga ErroValidacao se estiver errado
 
 void Pessoa::setId(int id) {
     if (id < 0) {
@@ -101,7 +103,7 @@ void Pessoa::setTelefone(const string& telefone) {
     telefone_ = textoObrigatorio(telefone, "Telefone");
 }
 
-//definicao do construtor 
+// construtor: passa tudo pelos setters pra ja validar na criacao
 
 Pessoa::Pessoa(string nome, string cpf, string telefone, int id) {
     setId(id);
@@ -110,6 +112,7 @@ Pessoa::Pessoa(string nome, string cpf, string telefone, int id) {
     setTelefone(telefone);
 }
 
+// confere o formato AAAA-MM-DD e depois se a data existe de verdade (mes, dia e ano bissexto)
 string Pessoa::dataIsoValida(const string& data, const string& campo) {
     // formato AAAA-MM-DD: tamanho 10, hifens nas posicoes 4 e 7 e o resto so digitos
     bool formatoOk = data.size() == 10 && data[4] == '-' && data[7] == '-';

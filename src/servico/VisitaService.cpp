@@ -16,6 +16,7 @@ namespace {
 string agoraTexto() {
     time_t tempo = chrono::system_clock::to_time_t(chrono::system_clock::now());
     tm local{};
+// localtime_s e do windows e localtime_r e do linux e mac, cada sistema tem a sua
 #if defined(_WIN32)
     localtime_s(&local, &tempo);
 #else
@@ -38,10 +39,12 @@ bool cpfEmUso(IRepositorio<Pessoa>& repo, const string& cpf) {
 
 }  // namespace
 
+// guarda as referencias dos repositorios
 VisitaService::VisitaService(IRepositorio<Pessoa>& repoPessoa,
                              IRepositorio<Visita>& repoVisita)
     : repoPessoa_(repoPessoa), repoVisita_(repoVisita) {}
 
+// valida pelo construtor, confere se o cpf ja existe (RN07) e salva
 int VisitaService::cadastrarVisitante(const string& nome, const string& cpf,
                                       const string& telefone) {
     // o construtor valida nome, cpf e telefone (ErroValidacao)
@@ -53,6 +56,8 @@ int VisitaService::cadastrarVisitante(const string& nome, const string& cpf,
     return repoPessoa_.inserir(novo);
 }
 
+// confere o visitante e o porteiro (RN05) e grava a entrada com a hora de agora
+// (se o apartamento nao existir o banco recusa e vira ErroRegraNegocio)
 int VisitaService::registrarEntrada(int visitanteId, int apartamentoId, int porteiroId) {
     // o visitante precisa existir e ser mesmo um visitante
     unique_ptr<Pessoa> visitante = repoPessoa_.buscarPorId(visitanteId);
@@ -81,6 +86,7 @@ int VisitaService::registrarEntrada(int visitanteId, int apartamentoId, int port
     }
 }
 
+// a visita tem que existir e estar aberta, grava a saida com a hora de agora
 void VisitaService::registrarSaida(int visitaId) {
     unique_ptr<Visita> visita = repoVisita_.buscarPorId(visitaId);
     if (!visita) {
@@ -95,6 +101,7 @@ void VisitaService::registrarSaida(int visitaId) {
     repoVisita_.atualizar(*visita);
 }
 
+// pega todas as visitas e fica so com as que nao tem saida
 vector<unique_ptr<Visita>> VisitaService::listarAbertas() {
     vector<unique_ptr<Visita>> abertas;
     for (auto& visita : repoVisita_.listar()) {
@@ -105,6 +112,7 @@ vector<unique_ptr<Visita>> VisitaService::listarAbertas() {
     return abertas;
 }
 
+// pega todas as visitas e fica so com as daquele apartamento
 vector<unique_ptr<Visita>> VisitaService::historicoPorApartamento(int apartamentoId) {
     vector<unique_ptr<Visita>> historico;
     for (auto& visita : repoVisita_.listar()) {
