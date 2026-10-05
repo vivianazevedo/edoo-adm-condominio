@@ -12,7 +12,7 @@ INSERT INTO pessoa (id, nome, cpf, telefone, tipo) VALUES
     (3, 'Carla Exemplo', '12345678909', '81999990003', 'visitante');
 
 INSERT INTO morador (pessoa_id, apartamento_id, tipo_ocupacao, data_entrada)
-VALUES (1, 1, 'proprietario', '2026-09-01');
+VALUES (1, 1, 'Proprietario', '2026-09-01');
 
 INSERT INTO funcionario (pessoa_id, cargo, turno, data_admissao)
 VALUES (2, 'Porteiro', 'diurno', '2026-09-01');

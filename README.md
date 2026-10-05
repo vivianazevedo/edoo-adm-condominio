@@ -5,9 +5,9 @@ Sistema de informação em **C++ orientado a objetos** para administrar um condo
 > Projeto prático da disciplina **CIN0135 – Estruturas de Dados Orientadas a Objetos**
 > Centro de Informática (CIn) – UFPE · Semestre 2026.2 · Prof. Francisco Paulo Magalhães Simões
 
-- **Página do projeto:** _[link do github.io]_
-- **Vídeo de apresentação:** _[link do YouTube]_
-- **Relatório:** _[link do relatório]_
+- **Página do projeto:** [vivianazevedo.github.io/edoo-adm-condominio](https://vivianazevedo.github.io/edoo-adm-condominio/)
+- **Vídeo de apresentação:** _[link do YouTube: pendente de publicação]_
+- **Relatório:** [`docs/relatorio.pdf`](docs/relatorio.pdf)
 
 ## Equipe
 
@@ -26,8 +26,9 @@ Vivian Azevedo · Clécio Muniz · Sâmia Freitas · Beatriz Luna
 7. [Banco de dados](#banco-de-dados)
 8. [Estrutura do repositório](#estrutura-do-repositório)
 9. [Documentação](#documentação)
-10. [Fluxo de trabalho em equipe](#fluxo-de-trabalho-em-equipe)
-11. [Referências](#referências)
+10. [Limitações e trabalhos futuros](#limitações-e-trabalhos-futuros)
+11. [Fluxo de trabalho em equipe](#fluxo-de-trabalho-em-equipe)
+12. [Referências](#referências)
 
 ---
 
@@ -35,14 +36,14 @@ Vivian Azevedo · Clécio Muniz · Sâmia Freitas · Beatriz Luna
 
 - **Apartamentos:** cadastro, listagem, edição e remoção (CRUD completo).
 - **Moradores:** cadastro vinculado a um apartamento, com tipo de ocupação (proprietário, inquilino ou dependente), listagem geral ou por apartamento, edição e remoção.
-- **Funcionários:** cadastro com cargo (porteiro, zelador, faxineiro ou administrador) e turno.
+- **Funcionários:** CRUD completo, com cargo (porteiro, zelador, faxineiro ou administrador), turno e data de admissão.
 - **Visitantes e visitas:** cadastro de visitantes, registro de entrada e de saída por um porteiro, e histórico de visitas por apartamento.
-- **Áreas comuns:** salão de festas, piscina e churrasqueira, cada uma com capacidade, taxa-base e horário de funcionamento.
-- **Reservas:** criar, consultar por morador e cancelar, com validação de conflito de horário, capacidade e horário de funcionamento.
+- **Áreas comuns:** salão de festas, piscina e churrasqueira, cada uma com capacidade, taxa-base e horário de funcionamento. Na interface gráfica há cadastro, edição (nome, capacidade e taxa) e remoção; o terminal lista e cadastra.
+- **Reservas:** criar e cancelar, com validação de conflito de horário, capacidade, duração e horário de funcionamento, e cálculo automático do valor. A consulta por morador está no terminal; a interface gráfica lista todas as reservas.
 
 Há duas formas de usar o sistema, ambas sobre o mesmo núcleo e o mesmo banco:
 
-- `condominio_gui`: interface gráfica Qt 6 com três abas (Moradores e Aptos, Áreas e Reservas, Portaria e Visitas).
+- `condominio_gui`: interface gráfica Qt 6 com três abas (Moradores e Aptos, Áreas e Reservas, Portaria e Visitas). Os funcionários são gerenciados na aba Portaria e Visitas.
 - `condominio_terminal`: interface em menus no terminal (apartamentos, moradores e funcionários; áreas e reservas; portaria com visitantes e visitas).
 
 ---
@@ -132,11 +133,11 @@ Na raiz do projeto:
 ctest --test-dir build --output-on-failure
 ```
 
-São 13 testes (12 se o Qt não estiver instalado), cobrindo banco, repositórios, fábricas, serviços, fluxos da GUI e cenários de integração. O resultado esperado é `100% tests passed`. Detalhes em [`docs/testes.md`](docs/testes.md).
+São 14 testes (13 se o Qt não estiver instalado), cobrindo banco, repositórios, fábricas, serviços, correções de bugs, fluxos da GUI e cenários de integração. O resultado esperado é `100% tests passed`. Detalhes em [`docs/testes.md`](docs/testes.md).
 
 ### 6. Dados de exemplo (opcional)
 
-O arquivo `sql/seed.sql` tem dados fictícios (um apartamento, um morador, um porteiro, um visitante, uma área e uma reserva) para demonstração. Ele **não** é aplicado automaticamente. Use apenas em um banco vazio, depois de abrir o sistema uma vez para criar as tabelas:
+O arquivo `sql/seed.sql` tem dados fictícios (um apartamento, um morador, um porteiro, um visitante, uma área, uma reserva e uma visita) para demonstração. Ele **não** é aplicado automaticamente. Use apenas em um banco vazio, depois de abrir o sistema uma vez para criar as tabelas. É preciso ter o cliente de linha de comando `sqlite3` instalado (ele não faz parte dos pré-requisitos do projeto):
 
 ```bash
 cd build
@@ -170,17 +171,32 @@ Os erros das regras de negócio aparecem em janelas explicativas, e os dados sã
 
 ## Regras de negócio
 
-As regras ficam na camada de serviço e são verificadas pelos testes automáticos.
+As regras ficam na camada de serviço e no modelo, e são verificadas pelos testes automáticos.
 
+**Reservas**
+
+- Não é possível reservar em data ou horário que já passou.
 - Não é possível reservar uma área em horário que conflite com outra reserva ativa.
-- A reserva respeita a capacidade, a duração e o horário de funcionamento de cada área.
-- O cancelamento de reserva exige **24 horas de antecedência**, e uma reserva já cancelada não pode ser cancelada de novo.
-- Somente um funcionário com cargo de **porteiro** registra entrada de visitantes; uma visita só recebe uma saída.
-- O **CPF é único** entre todas as pessoas (moradores, funcionários e visitantes).
-- Um apartamento com moradores não pode ser removido.
-- Um morador com reservas não pode ser removido.
-- Um funcionário com visitas registradas não pode ser removido.
+- A reserva respeita a capacidade, o horário de funcionamento e a duração máxima de cada área:
+
+| Área | Duração máxima | Valor da reserva |
+|---|---|---|
+| Salão de festas | 8 h | taxa-base + R$ 3,00 por convidado |
+| Piscina | 2 h (máx. 4 convidados) | gratuita |
+| Churrasqueira | 4 h | R$ 40,00 fixos |
+
+- O cancelamento exige **24 horas de antecedência**, e uma reserva já cancelada não pode ser cancelada de novo.
+
+**Visitas**
+
+- Somente um funcionário com cargo de **porteiro** registra entrada de visitantes.
+- Uma visita só recebe uma saída, e a saída não pode ser anterior à entrada.
+
+**Cadastros**
+
+- O **CPF** precisa ser válido (11 dígitos com dígitos verificadores) e é **único** entre todas as pessoas (moradores, funcionários e visitantes).
 - Não pode haver dois apartamentos com o mesmo bloco e número.
+- Não podem ser removidos: apartamento com moradores, morador com reservas, funcionário com visitas registradas e área comum com reservas.
 
 ---
 
@@ -235,9 +251,9 @@ Mais detalhes em [`docs/relatorio-arquitetura.md`](docs/relatorio-arquitetura.md
 | **Herança** | Hierarquias de `Pessoa` e `AreaComum` |
 | **Polimorfismo** | Cada área comum calcula a taxa e valida a reserva à sua maneira (`virtual` / `override`); cada pessoa informa o próprio `tipo()` |
 | **Classes abstratas** | `Pessoa`, `AreaComum` e a interface `IRepositorio<T>` |
-| **Encapsulamento e modificadores de acesso** | Atributos privados/protegidos, acesso por getters e validação no construtor |
-| **Ponteiros e referências** | `unique_ptr` em objetos criados pelas fábricas e repositórios, `const&` em parâmetros |
-| **Composição e associação** | Apartamento ↔ morador; reserva liga morador e área comum; visita liga visitante, apartamento e porteiro |
+| **Encapsulamento e modificadores de acesso** | Atributos privados/protegidos, acesso por getters e setters com validação (CPF, datas, horários, capacidade) |
+| **Ponteiros e referências** | `unique_ptr` em objetos criados pelas fábricas e repositórios, `shared_ptr` nas dependências dos serviços de áreas e reservas, `const&` em parâmetros e ponteiro não proprietário (`Morador*`) em `Apartamento` |
+| **Composição e associação** | Associações por identificador: `Morador` guarda o `apartamentoId`; `Reserva` liga morador e área comum; `Visita` liga visitante, apartamento e porteiro. `Apartamento` também mantém uma lista de ponteiros não proprietários para seus moradores, mas hoje as regras de remoção são garantidas pelas chaves estrangeiras do banco |
 | **Tratamento de erros** | Hierarquia de exceções própria (`ErroValidacao`, `ErroRegraNegocio`, `ErroBanco`) |
 
 ---
@@ -260,7 +276,7 @@ Tabelas: `apartamento`, `pessoa`, `morador`, `funcionario`, `area_comum`, `reser
 .
 ├── CMakeLists.txt
 ├── README.md
-├── docs/                  # relatório de arquitetura, diagrama ER, testes, roteiro do vídeo
+├── docs/                  # relatório (PDF), diagramas, site github.io, guias, testes e roteiro do vídeo
 ├── sql/
 │   ├── schema.sql         # criação das tabelas
 │   └── seed.sql           # dados fictícios de demonstração
@@ -288,6 +304,9 @@ Tabelas: `apartamento`, `pessoa`, `morador`, `funcionario`, `area_comum`, `reser
 
 | Documento | Conteúdo |
 |---|---|
+| [`docs/relatorio.pdf`](docs/relatorio.pdf) | Relatório completo do projeto |
+| [`docs/diagrama-classes.png`](docs/diagrama-classes.png) (e `.pdf`) | Diagrama de classes final |
+| [`docs/index.html`](docs/index.html) | Código-fonte da página github.io |
 | [`docs/execucao-local.md`](docs/execucao-local.md) | Compilar e executar localmente |
 | [`docs/interface-grafica.md`](docs/interface-grafica.md) | Uso e verificação da interface Qt |
 | [`docs/relatorio-arquitetura.md`](docs/relatorio-arquitetura.md) | Camadas e padrões de projeto |
@@ -297,6 +316,14 @@ Tabelas: `apartamento`, `pessoa`, `morador`, `funcionario`, `area_comum`, `reser
 | [`docs/irepositorio.md`](docs/irepositorio.md) e [`docs/fabricas-i06.md`](docs/fabricas-i06.md) | Interface de repositório e fábricas |
 
 ---
+
+## Limitações e trabalhos futuros
+
+- A consulta de reservas por **área e data** existe no serviço (`ReservaService::listarPorArea`) e nos testes, mas ainda não aparece no terminal nem na interface gráfica.
+- A edição de área comum não altera o tipo nem o horário de funcionamento, e o terminal não edita nem remove áreas.
+- O padrão **Observer** (telas atualizadas automaticamente por signals e slots) não foi implementado: as telas se atualizam ao trocar de aba.
+- Ficaram de fora as tarefas extras do planejamento: avisos importantes, subclasses `Porteiro` e `Zelador`, relatórios extras, testes com doctest e banco na nuvem (Supabase).
+- Fora do escopo: pagamento real, login e senha, acesso simultâneo e versão web ou mobile. O porteiro é escolhido no formulário, sem autenticação.
 
 ## Fluxo de trabalho em equipe
 
