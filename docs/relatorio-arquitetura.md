@@ -32,6 +32,32 @@ O banco salva um discriminador de tipo, mas não um objeto C++. `FabricaPorTipo<
 
 O padrão **Factory** concentra a escolha da subclasse, preserva o polimorfismo depois de uma leitura do banco e evita espalhar essa decisão pelas telas. Os testes verificam a reconstrução de `Morador` e `Piscina` a partir de dados persistidos.
 
+## Polimorfismo e Regras de Negócio (Áreas Comuns e Reservas)
+
+O módulo de Áreas Comuns e Reservas exemplifica a aplicação de **polimorfismo em tempo de execução** para gerir diferentes regras de tarifação e capacidade sem acoplar a camada de serviços às classes concretas.
+
+### Hierarquia e Sobrescrita de Métodos
+
+A classe abstrata `AreaComum` declara dois métodos virtuais puros que são redefinidos (`override`) pelas subclasses:
+
+* `calcularTaxa(int numConvidados)`:
+  * `SalaoFestas`: Calcula a taxa base acrescida de um valor variável por convidado.
+  * `Piscina`: Isento de taxa (retorna R$ 0,00).
+  * `Churrasqueira`: Aplica uma taxa fixa, independentemente do número de convidados.
+
+* `validarReserva(int numConvidados, std::string horaInicio, std::string horaFim)`:
+  * `SalaoFestas`: Valida se o número de convidados respeita o limite do salão (até 80 pessoas).
+  * `Piscina`: Garante a restrição de no máximo 4 convidados por reserva.
+  * `Churrasqueira`: Valida o limite de ocupação do espaço (até 20 pessoas).
+
+### Regras de Negócio do `ReservaService`
+
+A camada de serviço (`ReservaService`) orquestra o fluxo de reserva executando três verificações essenciais antes da persistência no SQLite:
+
+1. **Validação Polimórfica:** Invocação do método `validarReserva()` da subclasse específica da área para validar regras de capacidade.
+2. **Prevenção de Sobreposição de Horários (US06):** Consulta do `RepositorioReserva` para assegurar que não existem reservas ativas na mesma área e data cujos intervalos de tempo (`horaInicio` e `horaFim`) se sobreponham.
+3. **Cálculo Automático:** Registo do custo total da reserva invocando `calcularTaxa()` diretamente sobre o objeto polimórfico instanciado pela fábrica.
+
 ## Verificação e limites
 
 Os dez cenários de integração D02 e os comandos para reproduzi-los estão em `docs/testes.md`. Em 02/10/2026, o núcleo compilou com MSVC 19.51 e os testes então registrados passaram; a compilação da interface Qt não pôde ser confirmada na máquina usada porque Qt 6 Widgets não estava instalado. A equipe deve repetir o build com Qt e registrar um segundo computador antes de afirmar que o critério completo de G05 foi atingido.
