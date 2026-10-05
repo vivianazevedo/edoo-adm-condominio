@@ -2,16 +2,15 @@
 #include <string> 
 #include <exception> 
 
-using namespace std; 
 
-class ErroCondominio : public exception { // classe herda publicamente da bibilioteca 
+class ErroCondominio : public std::exception { // classe herda publicamente da bibilioteca 
 
     private:
 
-        string mensagem_; 
+        std::string mensagem_; 
 
     public: 
-        explicit ErroCondominio(string mensagem); // construtor 
+        explicit ErroCondominio(std::string mensagem); // construtor 
 
         const char* what() const noexcept override; // pega o objeto de erro e transforma em texto legivel
 
@@ -20,7 +19,7 @@ class ErroCondominio : public exception { // classe herda publicamente da bibili
 class ErroValidacao : public ErroCondominio { // erro de CPF invalido
 
     public:
-        explicit ErroValidacao (const string& mensagem); //construtor 
+        explicit ErroValidacao (const std::string& mensagem); //construtor 
 
 };
 
@@ -28,7 +27,7 @@ class ErroValidacao : public ErroCondominio { // erro de CPF invalido
 class ErroRegraNegocio : public ErroCondominio { //regra de negocio invalidada
 
     public:
-        explicit ErroRegraNegocio (const string& mensagem); // construtor 
+        explicit ErroRegraNegocio (const std::string& mensagem); // construtor 
 
 };
 
@@ -36,5 +35,5 @@ class ErroRegraNegocio : public ErroCondominio { //regra de negocio invalidada
 class ErroBanco : public ErroCondominio {
 
     public:
-        explicit ErroBanco (const string& mensagem); //construtor 
+        explicit ErroBanco (const std::string& mensagem); //construtor 
 };

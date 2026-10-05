@@ -2,6 +2,8 @@
 #include <string>
 #include "infra/ErroCondominio.h"
 
+using namespace std;  // permitido em .cpp (so e proibido nos .h)
+
 namespace {
 
 // procura outro apartamento com o mesmo bloco e numero

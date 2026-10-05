@@ -11,6 +11,8 @@
 #include "modelo/Morador.h"
 #include "modelo/Visitante.h"
 
+using namespace std;  // permitido em .cpp (so e proibido nos .h)
+
 namespace {
 
 // comando preparado que se fecha sozinho quando sai do escopo

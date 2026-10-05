@@ -2,7 +2,6 @@
 #include <string>
 #include "modelo/Pessoa.h"
 
-using namespace std; 
 
 
 enum class TipoOcupacao { Proprietario, Inquilino, Dependente}; //forma de ocupacao
@@ -12,20 +11,20 @@ class Morador : public Pessoa {
     private:
         int apartamentoId_ = 0;
         TipoOcupacao tipoOcupacao_ = TipoOcupacao::Proprietario;
-        string dataEntrada_;
+        std::string dataEntrada_;
 
     public: 
-        Morador(string nome, string cpf, string telefone, int apartamentoId, // construtor 
-        TipoOcupacao tipoOcupacao, string dataEntrada, int id = 0);
+        Morador(std::string nome, std::string cpf, std::string telefone, int apartamentoId, // construtor 
+        TipoOcupacao tipoOcupacao, std::string dataEntrada, int id = 0);
 
 
-        string tipo() const override;
+        std::string tipo() const override;
 
         int apartamentoId() const { return apartamentoId_; }
         TipoOcupacao tipoOcupacao() const { return tipoOcupacao_; }
-        const string& dataEntrada() const { return dataEntrada_; }
+        const std::string& dataEntrada() const { return dataEntrada_; }
 
         void setApartamentoId(int apartamentoId);
         void setTipoOcupacao(TipoOcupacao tipoOcupacao) { tipoOcupacao_ = tipoOcupacao; }
-        void setDataEntrada(const string& dataEntrada);
+        void setDataEntrada(const std::string& dataEntrada);
 };

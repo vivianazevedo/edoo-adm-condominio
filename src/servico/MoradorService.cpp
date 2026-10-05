@@ -3,6 +3,8 @@
 #include <utility>
 #include "infra/ErroCondominio.h"
 
+using namespace std;  // permitido em .cpp (so e proibido nos .h)
+
 namespace {
 
 // confere se o apartamento existe, senao joga ErroRegraNegocio

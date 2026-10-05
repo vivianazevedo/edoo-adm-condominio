@@ -44,10 +44,10 @@ double lerDecimal(const char* pergunta) {
 void MenuReservas::exibirMenu() {
     while (std::cin) {
         std::cout << "\n========================================\n";
-        std::cout << "      Gesta'o de A'reas e Reservas      \n";
+        std::cout << "      Gestao de Areas e Reservas      \n";
         std::cout << "========================================\n";
-        std::cout << "1. Listar A'reas Comuns\n";
-        std::cout << "2. Cadastrar A'rea Comum\n";
+        std::cout << "1. Listar Areas Comuns\n";
+        std::cout << "2. Cadastrar Area Comum\n";
         std::cout << "3. Solicitar Reserva\n";
         std::cout << "4. Listar Reservas por Morador\n";
         std::cout << "5. Cancelar Reserva\n";
@@ -72,9 +72,9 @@ void MenuReservas::exibirMenu() {
 
 void MenuReservas::listarAreas() {
     auto areas = areaService_.listar();
-    std::cout << "\n--- A'reas Comuns Cadastradas ---\n";
+    std::cout << "\n--- Areas Comuns Cadastradas ---\n";
     if (areas.empty()) {
-        std::cout << "Nenhuma a'rea cadastrada.\n";
+        std::cout << "Nenhuma area cadastrada.\n";
         return;
     }
     for (const auto& a : areas) {
@@ -87,7 +87,7 @@ void MenuReservas::listarAreas() {
 }
 
 void MenuReservas::cadastrarArea() {
-    std::cout << "\n--- Nova A'rea Comum ---\n";
+    std::cout << "\n--- Nova Area Comum ---\n";
     const std::string tipo = lerTexto("Tipo (SalaoFestas, Piscina, Churrasqueira): ");
     const std::string nome = lerTexto("Nome: ");
     const int capacidade = lerInteiro("Capacidade: ");
@@ -97,9 +97,9 @@ void MenuReservas::cadastrarArea() {
 
     int res = areaService_.cadastrar(tipo, nome, capacidade, taxaBase, abertura, fechamento);
     if (res > 0) {
-        std::cout << "A'rea cadastrada com sucesso! ID: " << res << "\n";
+        std::cout << "Area cadastrada com sucesso! ID: " << res << "\n";
     } else {
-        std::cout << "Erro ao cadastrar a'rea.\n";
+        std::cout << "Erro ao cadastrar area.\n";
     }
 }
 
@@ -116,7 +116,7 @@ void MenuReservas::criarReserva() {
     if (idReserva > 0) {
         std::cout << "Reserva efetuada com sucesso! ID da Reserva: " << idReserva << "\n";
     } else {
-        std::cout << "Falha ao criar reserva (verifique conflito de hora'rio ou limite de convidados).\n";
+        std::cout << "Falha ao criar reserva (verifique conflito de horario ou limite de convidados).\n";
     }
 }
 
@@ -131,9 +131,9 @@ void MenuReservas::listarMinhasReservas() {
     }
     for (const auto& r : reservas) {
         std::cout << "ID Reserva: " << r.getId()
-                  << " | A'rea ID: " << r.getAreaId()
+                  << " | Area ID: " << r.getAreaId()
                   << " | Data: " << r.getData()
-                  << " | Hor'ario: " << r.getHoraInicio() << " a's " << r.getHoraFim()
+                  << " | Horario: " << r.getHoraInicio() << " as " << r.getHoraFim()
                   << " | Valor: R$ " << r.getValor() << "\n";
     }
 }
@@ -145,6 +145,6 @@ void MenuReservas::cancelarReserva() {
     if (reservaService_.cancelar(reservaId)) {
         std::cout << "Reserva cancelada com sucesso!\n";
     } else {
-        std::cout << "Erro ao cancelar reserva. ID na'o encontrado.\n";
+        std::cout << "Erro ao cancelar reserva. ID nao encontrado.\n";
     }
 }

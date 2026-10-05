@@ -7,7 +7,6 @@
 #include "modelo/Apartamento.h"
 #include "repositorio/IRepositorio.h"
 
-using namespace std;
 
 class MoradorService {
 
@@ -21,18 +20,18 @@ class MoradorService {
                     IRepositorio<Apartamento>& repoApto);
 
         // cadastra o morador num apartamento e devolve o id gerado
-        int cadastrar(const string& nome, const string& cpf, const string& telefone,
+        int cadastrar(const std::string& nome, const std::string& cpf, const std::string& telefone,
                     int apartamentoId, TipoOcupacao tipoOcupacao,
-                    const string& dataEntrada);
+                    const std::string& dataEntrada);
 
-        vector<unique_ptr<Pessoa>> listar();// devolve todos os moradores
+        std::vector<std::unique_ptr<Pessoa>> listar();// devolve todos os moradores
 
-        vector<unique_ptr<Pessoa>> listarPorApartamento(int apartamentoId); // devolve so os moradores apartamento x 
+        std::vector<std::unique_ptr<Pessoa>> listarPorApartamento(int apartamentoId); // devolve so os moradores apartamento x 
 
         // altera um morador que ja existe
-        void editar(int id, const string& nome, const string& cpf,
-                    const string& telefone, int apartamentoId,
-                    TipoOcupacao tipoOcupacao, const string& dataEntrada);
+        void editar(int id, const std::string& nome, const std::string& cpf,
+                    const std::string& telefone, int apartamentoId,
+                    TipoOcupacao tipoOcupacao, const std::string& dataEntrada);
 
         // remove o morador 
         void remover(int id);

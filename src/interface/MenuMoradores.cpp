@@ -8,6 +8,8 @@
 #include "modelo/Funcionario.h"
 #include "modelo/Morador.h"
 
+using namespace std;  // permitido em .cpp (so e proibido nos .h)
+
 namespace {
 
 // le uma linha inteira (aceita espacos), se a entrada acabar devolve vazio

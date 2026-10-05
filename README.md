@@ -43,7 +43,7 @@ Vivian Azevedo · Clécio Muniz · Sâmia Freitas · Beatriz Luna
 Há duas formas de usar o sistema, ambas sobre o mesmo núcleo e o mesmo banco:
 
 - `condominio_gui`: interface gráfica Qt 6 com três abas (Moradores e Aptos, Áreas e Reservas, Portaria e Visitas).
-- `condominio_terminal`: interface em menus no terminal.
+- `condominio_terminal`: interface em menus no terminal (apartamentos, moradores e funcionários; áreas e reservas; portaria com visitantes e visitas).
 
 ---
 

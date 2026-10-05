@@ -49,6 +49,7 @@ add_executable(condominio_terminal
     src/terminal/main_terminal.cpp
     src/interface/MenuMoradores.cpp
     src/interface/MenuReservas.cpp
+    src/interface/MenuVisitas.cpp
 )
 target_include_directories(condominio_terminal PRIVATE include)
 target_link_libraries(condominio_terminal PRIVATE condominio_core)
@@ -157,6 +158,11 @@ if(BUILD_TESTING)
             "${CMAKE_CURRENT_BINARY_DIR}/database_i02_test.db"
             "${CMAKE_CURRENT_SOURCE_DIR}/sql/schema.sql"
     )
+
+    add_executable(test_correcoes_bugs tests/test_correcoes_bugs.cpp)
+    target_link_libraries(test_correcoes_bugs PRIVATE condominio_core)
+    add_test(NAME correcoes_bugs
+             COMMAND test_correcoes_bugs "${CMAKE_CURRENT_SOURCE_DIR}/sql/schema.sql")
 
     add_test(NAME irepositorio_i04 COMMAND test_irepositorio_i04)
     add_test(NAME fabricas_i06 COMMAND test_fabricas_i06)

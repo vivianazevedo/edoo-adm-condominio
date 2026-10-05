@@ -3,7 +3,6 @@
 #include "servico/FuncionarioService.h"
 #include "servico/MoradorService.h"
 
-using namespace std;
 
 // menu de terminal de apartamentos, moradores e funcionarios
 // nao guarda dados: so le o que a pessoa digita e chama os servicos

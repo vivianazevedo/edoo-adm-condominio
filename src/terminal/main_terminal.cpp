@@ -1,11 +1,14 @@
 #include "infra/Database.h"
 #include "interface/MenuMoradores.h"
 #include "interface/MenuReservas.h"
+#include "interface/MenuVisitas.h"
 #include "repositorio/RepositorioApartamento.h"
 #include "repositorio/RepositorioPessoa.h"
+#include "repositorio/RepositorioVisita.h"
 #include "servico/ApartamentoService.h"
 #include "servico/FuncionarioService.h"
 #include "servico/MoradorService.h"
+#include "servico/VisitaService.h"
 
 #include <exception>
 #include <iostream>
@@ -31,17 +34,22 @@ int main(int argc, char* argv[]) {
         FuncionarioService funcionarios(repoPessoas);
         MenuMoradores menuPessoas(apartamentos, moradores, funcionarios);
         MenuReservas menuReservas;
+        RepositorioVisita repoVisitas;
+        VisitaService visitas(repoPessoas, repoVisitas);
+        MenuVisitas menuVisitas(visitas);
 
         std::string opcao;
         while (std::cin) {
             std::cout << "\n=== Sistema de Gestao de Condominio ===\n"
                       << "1. Apartamentos, moradores e funcionarios\n"
                       << "2. Areas comuns e reservas\n"
+                      << "3. Portaria: visitantes e visitas\n"
                       << "0. Sair\nEscolha: ";
             if (!std::getline(std::cin, opcao) || opcao == "0") break;
             try {
                 if (opcao == "1") menuPessoas.exibirMenu();
                 else if (opcao == "2") menuReservas.exibirMenu();
+                else if (opcao == "3") menuVisitas.exibirMenu();
                 else std::cout << "Opcao invalida.\n";
             } catch (const std::exception& erro) {
                 std::cerr << "Operacao nao concluida: " << erro.what() << '\n';
