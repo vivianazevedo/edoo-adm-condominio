@@ -7,7 +7,7 @@ Sistema de informação em **C++ orientado a objetos** para administrar um condo
 
 - **Página do projeto:** [vivianazevedo.github.io/edoo-adm-condominio](https://vivianazevedo.github.io/edoo-adm-condominio/)
 - **Vídeo de apresentação:** https://drive.google.com/drive/folders/1Gb5bE8oEQPiTGzc9N_Ti4D7jimusW1LI?usp=sharing
-- **Relatório:** [`https://drive.google.com/file/d/1wqkPca27tXL6BVB0EQ0vkckIonAlvTI-/view?usp=drive_link`](docs/relatorio.pdf)
+- **Relatório:** [https://drive.google.com/file/d/1wqkPca27tXL6BVB0EQ0vkckIonAlvTI-/view?usp=drive_link] (https://drive.google.com/file/d/1wqkPca27tXL6BVB0EQ0vkckIonAlvTI-/view?usp=drive_link)
 
 ## Equipe
 
