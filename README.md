@@ -304,7 +304,6 @@ Tabelas: `apartamento`, `pessoa`, `morador`, `funcionario`, `area_comum`, `reser
 
 | Documento | Conteúdo |
 |---|---|
-| [`docs/relatorio.pdf`](docs/relatorio.pdf) | Relatório completo do projeto |
 | [`docs/diagrama-classes.png`](docs/diagrama-classes.png) (e `.pdf`) | Diagrama de classes final |
 | [`docs/index.html`](docs/index.html) | Código-fonte da página github.io |
 | [`docs/execucao-local.md`](docs/execucao-local.md) | Compilar e executar localmente |
