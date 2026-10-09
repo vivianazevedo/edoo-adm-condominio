@@ -6,7 +6,7 @@ Sistema de informação em **C++ orientado a objetos** para administrar um condo
 > Centro de Informática (CIn) – UFPE · Semestre 2026.2 · Prof. Francisco Paulo Magalhães Simões
 
 - **Página do projeto:** [vivianazevedo.github.io/edoo-adm-condominio](https://vivianazevedo.github.io/edoo-adm-condominio/)
-- **Vídeo de apresentação:** [Vídeo do projeto] (disponibilizado até 08/10)
+- **Vídeo de apresentação:** [Vídeo do projeto] (https://www.youtube.com/watch?v=-8gLRzv38X4)
 - **Relatório:** [Relatório PDF ](https://drive.google.com/file/d/1wqkPca27tXL6BVB0EQ0vkckIonAlvTI-/view?usp=drive_link)
 
 ## Equipe
